@@ -27,6 +27,7 @@ RGBLIGHT_ENABLE = no        # Enable WS2812 RGB underlight.
 RGB_MATRIX_ENABLE = yes
 RGB_MATRIX_DRIVER = WS2812
 SLEEP_LED_ENABLE = yes       # Breathing sleep LED during USB suspend
+RGB_UNLIMITED_POWER = yes   # Enable max power to the LEDs
 
 OLED_DRIVER_ENABLE = yes    # Enable the OLED Driver
 

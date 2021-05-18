@@ -80,11 +80,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define RGB_MATRIX_KEYPRESSES
 #define RGB_MATRIX_FRAMEBUFFER_EFFECTS
 
-#if RGB_UNLIMITED_POWER
+//#if RGB_UNLIMITED_POWER
   #define RGBLIGHT_LIMIT_VAL 255
-#else
-  #define RGBLIGHT_LIMIT_VAL 127
-#endif
+//#else
+//  #define RGBLIGHT_LIMIT_VAL 127
+//#endif
 #define RGB_MATRIX_MAXIMUM_BRIGHTNESS RGBLIGHT_LIMIT_VAL
 
 #define WS2812_PWM_DRIVER PWMD3
@@ -97,7 +97,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #define OLED_UPDATE_INTERVAL 33
 #define TAP_CODE_DELAY 5
 
-#define MOUSEKEY_WHEEL_TIME_TO_MAX 1 // Set time to reach max scroll speed (mouse keys; default 40)
+#define MOUSEKEY_WHEEL_TIME_TO_MAX 0 // Set time to reach max scroll speed (mouse keys; default 40)
 #define MOUSEKEY_WHEEL_MAX_SPEED 100  // Set max number of scroll steps (default 8)
 
 #define TAPPING_TERM 150  // Tap-dance/tap-hold term duration

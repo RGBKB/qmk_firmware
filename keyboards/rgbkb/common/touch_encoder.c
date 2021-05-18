@@ -295,7 +295,6 @@ void touch_encoder_update(void) {
         }
         if (delta & SLIDER_BIT) {
             touch_processed[3] = touch_raw[3];
-            //hold_start = touch_raw[3]; //unnecessary, I think
             if (!is_keyboard_master()) {
                 touch_slave_state.position = touch_raw[3];
                 touch_slave_state.taps ^= (1 << 7);
