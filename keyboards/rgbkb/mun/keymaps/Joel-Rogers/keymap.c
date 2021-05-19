@@ -4,6 +4,8 @@
 
 enum keymap_layers {
 	_COLEJDR,
+	_LYRHLD,
+	_LYROS,
     _NUM,
     _PUNC,
 	_RGBGUI,
@@ -13,7 +15,7 @@ enum keymap_layers {
 	_COLEMAK,
 	_GAME,
 	_FN,
-	_ADJUST
+	_ADJUST,
 };
 
 enum keymap_keycodes {
@@ -24,7 +26,6 @@ enum keymap_keycodes {
 
 // Tap-dance stuff - https://www.reddit.com/r/MechanicalKeyboards/comments/aq5a3c/qmk_tap_dancing_and_oneshot_layers_quick_demo/?utm_medium=android_app&utm_source=share
 // https://github.com/walkerstop/qmk_firmware/blob/fanoe/keyboards/wheatfield/blocked65/keymaps/walker/keymap.c
-// I only use this for one-shot numpad access on a shift key at the moment
 typedef struct {
   bool is_press_action;
   int state;
@@ -41,12 +42,18 @@ enum {
 
 //Tap dance enums
 enum {
-  LSFT_OSL2 = 0
+  SPCLYRHLD = 0,
+  LYROSTO = 1,
 };
 
+int ossft = 0; // for toggling off shift after one-shot layer
+int lyrlyr = 0; // for toggling off layer layer after making your selection
+
 int cur_dance (qk_tap_dance_state_t *state);
-void sft_finished (qk_tap_dance_state_t *state, void *user_data);
-void sft_reset (qk_tap_dance_state_t *state, void *user_data);
+void lyrhld_finished (qk_tap_dance_state_t *state, void *user_data);
+void lyrhld_reset (qk_tap_dance_state_t *state, void *user_data);
+void lyrostg_finished (qk_tap_dance_state_t *state, void *user_data);
+void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data);
 
 
 // End tap-dance stuff
@@ -71,6 +78,7 @@ void sft_reset (qk_tap_dance_state_t *state, void *user_data);
 //#define TNUM     MO(_TNUM)
 
 // Tap-hold keys
+// Main layer
 #define JWIN_A  LGUI_T(KC_A)
 #define JALT_S  LALT_T(KC_S)
 #define JCTL_I  LCTL_T(KC_I)
@@ -79,6 +87,24 @@ void sft_reset (qk_tap_dance_state_t *state, void *user_data);
 #define JCTL_R  LCTL_T(KC_R)
 #define JALT_E  LALT_T(KC_E)
 #define JWIN_O  LGUI_T(KC_O)
+// 3rd layer
+#define JWIN9  LGUI_T(KC_9)
+#define JALT0  LALT_T(KC_0)
+#define JCTLLBRC  LCTL_T(KC_LBRC)
+#define JSFTRBRC  LSFT_T(KC_RBRC)
+#define JSFTNUBS  LSFT_T(KC_NUBS)
+#define JCTLNUHS  LCTL_T(KC_NUHS)
+#define JALTPAST  LALT_T(KC_PAST)
+#define JWINSCLN  LGUI_T(KC_SCLN)
+// 5th layer
+#define JWINF2  LGUI_T(KC_F2)
+#define JALTF3  LALT_T(KC_F3)
+#define JCTLF4  LCTL_T(KC_F4)
+#define JSFTF5  LSFT_T(KC_F5)
+#define JSFTF8  LSFT_T(KC_F8)
+#define JCTLF9  LCTL_T(KC_F9)
+#define JALTF10 LALT_T(KC_F10)
+#define JWINF11 LGUI_T(KC_F11)
 //#define SFT_TAB  LSFT_T(KC_TAB)
 //#define CTL_SPC  LCTL_T(KC_SPC)
 
@@ -92,9 +118,11 @@ void sft_reset (qk_tap_dance_state_t *state, void *user_data);
 #define UTNUM    LT(_TNUM, KC_U)
 
 // Tap-dance keys
-// Currently unused, but I'd like to have left and right alt on the same key (hold for left, tap for one-shot right),
-// but I'll have to get more familiar with tap dance before I trust myself to execute this correctly.
-#define SFTNUM  TD(LSFT_OSL2)
+#define SPCHLD     TD(SPCLYRHLD)
+#define LYROSTG    TD(LYROSTO)
+
+// Layerhld keys
+
 
 // Mod-tap keys
 #define ALT_F4 LALT(KC_F4)
@@ -138,7 +166,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		OS_ALT,  KC_NUHS,  KC_2,    KC_J,    KC_Y,    KC_C,    KC_Z,    KC_V,     KC_M,    KC_H,    KC_K,    KC_9,    KC_INS,   KC_MUTE,
 		KC_NO,   KC_1,     UTNUM,   JALT_S,  JCTL_I,  JSFT_N,  KC_P,    KC_G,     JSFT_T,  JCTL_R,  JALT_E,  KC_B,    KC_0,     KC_NUBS,
 		KC_SCLN, TABGUI,   JWIN_A,  KC_W,    KC_COMM, KC_F,    KC_SLSH, KC_MINS,  KC_D,    KC_L,    KC_QUOT, JWIN_O,  DOTFNJ,   KC_NO,
-		KC_NO,   KC_NO,    KC_X,    KC_NO,   KC_DEL,  SWP_BCK, SPCNUM,  ENTPUNC,  SFTNUM,  KC_ESC,  KC_NO,   KC_Q,    KC_NO,    ALT_F4,
+		KC_NO,   KC_NO,    KC_X,    KC_SPC,   KC_DEL,  SWP_BCK, SPCHLD,  KC_SFTENT,LYROSTG, KC_ESC,  KC_NO,   KC_Q,    KC_NO,    ALT_F4,
 
 		_______, _______,  _______, _______,                                                        _______, _______, _______,  _______,
 		KC_WH_D, KC_WH_U,  FNJ,     KC_CAPS, KC_NO,                                        KC_DEL,  KC_BSPC, RGBGUI,  KC_NO,    QWERTY
@@ -148,8 +176,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
         _______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  KC_PSCR,
         _______, _______,  _______, KC_VOLD, KC_VOLU, _______, _______, KC_PAST,  KC_P7,   KC_P8,   KC_P9,   KC_BSPC, _______,  KC_NLCK,
 		_______, _______,  KC_MUTE, _______, _______, _______, KC_MNXT, KC_PSLS,  KC_P4,   KC_P5,   KC_P6,   KC_EQL,  KC_MINS,  _______,
-		_______, KC_LSFT,  _______, KC_LALT, KC_LWIN, KC_MPRV, KC_MPLY, _______,  KC_P1,   KC_P2,   KC_P3,   KC_P0,   KC_PPLS,  _______,
-		_______, _______,  _______, _______, _______, _______, _______, _______,  SFTNUM,  _______, _______, KC_PDOT, KC_COMM,  KC_RALT,
+		_______, _______,  _______, _______, _______, KC_MPRV, KC_MPLY, KC_SCLN,  KC_P1,   KC_P2,   KC_P3,   KC_P0,   KC_PPLS,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, KC_PDOT, KC_COMM,  KC_RALT,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
 		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
@@ -157,9 +185,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_PUNC] = LAYOUT(
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
-		_______, _______,  _______, _______, KC_EXLM, KC_AT,   _______, _______,  KC_SLSH,  KC_NUHS, _______, _______, _______, _______,
-		_______, _______,  _______, KC_LPRN, KC_RPRN, KC_LCBR, KC_RCBR, _______,  KC_NUBS,  KC_AMPR, KC_PAST, _______, _______, _______,
-		_______, KC_LSFT,  KC_LBRC, KC_RBRC, _______, _______, _______, _______,  KC_PND,   KC_DLR,  KC_PERC, KC_SCLN, KC_GRV,  _______,
+		_______, _______,  _______, _______, KC_EXLM, KC_AT,   _______, _______,  KC_SLSH,  KC_AMPR, _______, _______, _______, _______,
+		_______, _______,  _______, JALT0,   JCTLLBRC,JSFTRBRC,_______, _______,  JSFTNUBS, JCTLNUHS,JALTPAST,_______, _______, _______,
+		_______, _______,  JWIN9,   _______, _______, _______, _______, _______,  KC_PND,   KC_DLR,  KC_PERC, JWINSCLN, KC_GRV, _______,
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______,  _______, _______, KC_CIRC, _______, _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
@@ -168,10 +196,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_RGBGUI] = LAYOUT(
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
-		_______, _______,  _______, _______, _______, _______, _______, _______,  KC_HOME, KC_UP,   KC_END,  _______, _______,  _______,
-		_______, _______,  _______, _______, _______, _______, RGB_TOG, KC_TAB,   KC_LEFT, KC_DOWN, KC_RIGHT,KC_PGUP, RGB_HUI,  _______,
-		_______, _______,  _______, _______, RGB_VAI, RGB_VAD, _______, _______,  RGB_MOD, RGB_RMOD,RGB_SAI, _______, KC_PGDN,  _______,
-		_______, _______,  _______, _______, _______, _______, _______, _______,  KC_LALT, _______, _______, RGB_SAD, RGB_HUD,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, RGB_MOD,  KC_HOME, KC_UP,   KC_END,  _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, RGB_TOG, _______,  KC_LEFT, KC_DOWN, KC_RIGHT,KC_PGUP, RGB_HUI,  _______,
+		_______, _______,  _______, _______, RGB_VAI, RGB_VAD, _______, RGB_RMOD, KC_BSPC, KC_DEL,  RGB_SAI, KC_TAB,  KC_PGDN,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, RGB_SAD, RGB_HUD,  _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
 		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
@@ -179,9 +207,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 	[_FNJ] = LAYOUT(
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
-		_______, _______,  _______, KC_F3,   KC_F4,   KC_F5,   _______, _______,  KC_F7,   KC_F8,   KC_F9,   _______, _______,  _______,
-		_______, _______,  KC_F2,   _______, _______, _______, KC_F6,   _______,  _______, _______, _______, _______, _______,  _______,
-		_______, KC_F1,    _______, _______, _______, _______, _______, _______,  KC_F10,  KC_F11,  KC_F12,  _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+		_______, _______,  _______, JALTF3,  JCTLF4,  JSFTF5,  KC_F6,   KC_F7,    JSFTF8,  JCTLF9,  JALTF10, _______, _______,  _______,
+		_______, KC_F1,    JWINF2,  _______, _______, _______, _______, _______,  _______, _______, _______, JWINF11, KC_F12,   _______,
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
@@ -228,45 +256,34 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_HOME, KC_END,   NUM,   PUNC,    KC_NO,                                        KC_DEL, KC_BSPC, RGBGUI,  KC_CAPS,  COLEJDR
 	),
 
-	[_COLEMAK] = LAYOUT(
-		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-		_______, KC_Q,    KC_W,    KC_F,    KC_P,    KC_G,    _______, _______, KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCLN, _______,
-		_______, KC_A,    KC_R,    KC_S,    KC_T,    KC_D,    _______, _______, KC_H,    KC_N,    KC_E,    KC_I,    KC_O,    _______,
-		_______, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    _______, _______, KC_K,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, _______,
-		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
-	),
-
-	[_GAME] = LAYOUT(
-		_______, _______, _______, _______, _______, _______, KC_F1,   KC_F5,   _______, _______, _______, _______, _______, _______,
-		_______, KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,    KC_F2,   KC_F6,   KC_Y,    KC_U,    KC_I,    KC_O,    KC_P,    _______,
-		_______, KC_A,    KC_S,    KC_D,    KC_F,    KC_G,    KC_F3,   KC_F7,   KC_H,    KC_J,    KC_K,    KC_L,    KC_SCLN, _______,
-		_______, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_F4,   KC_F8,   KC_N,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, _______,
-		_______, KC_NO,   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
-	),
-
-	[_FN] = LAYOUT(
-		_______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F11,  KC_F12,  KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  _______,
-		_______, KC_HOME, KC_UP,   KC_END,  _______, _______, _______, _______, _______, KC_HOME, KC_UP,   KC_END,  KC_PSCR, KC_PGUP,
-		_______, KC_LEFT, KC_DOWN, KC_RGHT, _______, _______, _______, _______, _______, KC_LEFT, KC_DOWN, KC_RGHT, KC_INS,  KC_PGDN,
-		_______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,
-		_______, _______, _______, TCH_TOG, _______, _______, _______, _______, _______, KC_MPLY, KC_MNXT, KC_MUTE, KC_VOLD, KC_VOLU,
-
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
-	),
-
 	[_ADJUST] = LAYOUT(
 		_______, KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F11,  KC_F12,  KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  _______,
 		_______, RGB_SAD, RGB_VAI, RGB_SAI, RESET,   _______, _______, _______, _______, KC_P7,   KC_P8,   KC_P9,   _______, _______,
 		_______, RGB_HUD, RGB_VAD, RGB_HUI, _______, _______, _______, _______, _______, KC_P4,   KC_P5,   KC_P6,   _______, _______,
 		_______, RGB_SPD, _______, RGB_SPI, _______, _______, _______, _______, _______, KC_P1,   KC_P2,   KC_P3,   _______, GAME,
 		_______, RGB_RMOD,_______, RGB_MOD, _______, _______, _______, _______, _______, KC_P0,   KC_PDOT, KC_NLCK, QWERTY, COLEMAK,
+
+		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
+		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+	),
+
+	[_LYRHLD] = LAYOUT(
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+		_______, _______,_______,TG(_RGBGUI),TG(_PUNC),TG(_NUM),_______, _______,TG(_FNJ),TG(_TNUM),_______, _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+
+		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
+		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+	),
+
+	[_LYROS] = LAYOUT(
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+		_______, _______,_______,OSL(_RGBGUI),OSL(_PUNC),OSL(_NUM),_______, _______,OSL(_FNJ),OSL(_TNUM),_______, _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
 		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
@@ -292,44 +309,80 @@ int cur_dance (qk_tap_dance_state_t *state) {
   else return 8;
 }
 
-static tap sfttap_state = {
+static tap lyrhld_state = {
   .is_press_action = true,
   .state = 0
 };
 
-void sft_finished (qk_tap_dance_state_t *state, void *user_data) {
-  sfttap_state.state = cur_dance(state);
-  switch (sfttap_state.state) {
-    case SINGLE_TAP: set_oneshot_layer(_NUM, ONESHOT_START); clear_oneshot_layer_state(ONESHOT_PRESSED); break;
-    case SINGLE_HOLD: register_code(KC_LSFT); break;
-    case DOUBLE_TAP:
-    	if (layer_state_is(_NUM)) {
-			// If already set, then switch it off
-			layer_off(_NUM);
-		} else {
-			// If not already set, then switch the layer on
-			layer_on(_NUM);
-		}
+static tap lyrostg_state = {
+  .is_press_action = true,
+  .state = 0
+};
+
+void lyrhld_finished (qk_tap_dance_state_t *state, void *user_data) {
+  lyrhld_state.state = cur_dance(state);
+  switch (lyrhld_state.state) {
+    case SINGLE_TAP:
+    	tap_code(KC_SPC);
     	break;
-    case DOUBLE_HOLD: register_code(KC_LSFT); layer_on(_NUM); break;
-    //Last case is for fast typing. Assuming your key is `f`:
-    //For example, when typing the word `buffer`, and you want to make sure that you send `ff` and not `Esc`.
-    //In order to type `ff` when typing fast, the next character will have to be hit within the `TAPPING_TERM`, which by default is 200ms.
+    case SINGLE_HOLD:
+    	layer_on(_LYRHLD); // note that this will mask any lower layers! I'm yet to find any solution which
+    	// avoids this (one shot doesn't work)
+    	lyrlyr = 1;  // this might work to avoid masking of any lower layers - it results in the layer being disabled on the next key-up event
+    	// (which in proper usage should be the layer selection keypress)
+    	break;
   }
 }
 
-void sft_reset (qk_tap_dance_state_t *state, void *user_data) {
-  switch (sfttap_state.state) {
-    case SINGLE_TAP: break;
-    case SINGLE_HOLD: unregister_code(KC_LSFT); break;
-    case DOUBLE_TAP: break;
-    case DOUBLE_HOLD: layer_off(_NUM); unregister_code(KC_LSFT); break;
+void lyrhld_reset (qk_tap_dance_state_t *state, void *user_data) {
+  switch (lyrhld_state.state) {
+    case SINGLE_TAP:
+    	break;
+    case SINGLE_HOLD:
+    	layer_clear();
+    	break;//clears all layers on release (except base layer)
   }
-  sfttap_state.state = 0;
+  lyrhld_state.state = 0;
+}
+
+void lyrostg_finished (qk_tap_dance_state_t *state, void *user_data) {
+  lyrostg_state.state = cur_dance(state);
+  //layer_clear();  // This needs doing as long as the layer layer is below the layers being switched to,
+  // otherwise you get trapped when using the toggle function. It does mean you can't stack layers though.
+  switch (lyrostg_state.state) {
+    case SINGLE_TAP:
+    	set_oneshot_layer(_LYROS, ONESHOT_START);
+    	clear_oneshot_layer_state(ONESHOT_PRESSED);
+    	break;
+    case SINGLE_HOLD:
+    	layer_on(_LYRHLD);
+    	break; // I reckon these can share a layer
+    case DOUBLE_TAP:
+    	set_oneshot_layer(_LYROS, ONESHOT_START);
+    	register_code(KC_LSFT);
+    	ossft = 2;  // This is just a way to get around oneshot not allowing mod presses - by setting this variable to
+    	// 2 here, shift will be unregistered after two more key-ups (usually a layer-select plus on-layer keystroke).
+		clear_oneshot_layer_state(ONESHOT_PRESSED);
+		break;
+  }
+}
+
+void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data) {
+  switch (lyrostg_state.state) {
+    case SINGLE_TAP:
+    	break;
+    case SINGLE_HOLD:
+    	layer_off(_LYRHLD);
+    	break;
+    case DOUBLE_TAP:
+        break;
+  }
+  lyrostg_state.state = 0;
 }
 
 qk_tap_dance_action_t tap_dance_actions[] = {
-  [LSFT_OSL2]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,sft_finished, sft_reset)
+  [SPCLYRHLD]    = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrhld_finished, lyrhld_reset),
+  [LYROSTO]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrostg_finished, lyrostg_reset),
 };
 
 // End tap-dance stuff
@@ -345,6 +398,22 @@ void keyboard_post_init_user(void) {
 
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+	if (ossft){// check status on each keypress
+		if (!record->event.pressed) {//on key-up (skips mods as long as they're held)
+			ossft -= 1;// reduce by one on each non-mod keypress
+			if (!ossft){
+				unregister_code(KC_LSFT);
+			}
+		}
+	}
+	if (lyrlyr){// check status on each keypress
+		if (!record->event.pressed) {//on key-up (skips mods as long as they're held)
+			lyrlyr -= 1;// reduce by one on each non-mod keypress
+			if (!lyrlyr){
+				layer_off(_LYRHLD);
+			}
+		}
+	}
     switch (keycode) {
         case TCH_TOG:
             touch_encoder_toggle();
@@ -384,11 +453,15 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 		  /* Always cancel one-shot layer when another key gets pressed */
 		  if (record->event.pressed && is_oneshot_layer_active())
 		  clear_oneshot_layer_state(ONESHOT_OTHER_KEY_PRESSED);
+	      unregister_code(KC_LSFT);  // and disable shift (if active) - NOT CONFIDENT THIS WON'T BREAK THINGS!
+	      ossft = 0;
 		  return true;
 		case RESET:
 		  /* Don't allow reset from oneshot layer state */
 		  if (record->event.pressed && is_oneshot_layer_active()){
 			clear_oneshot_layer_state(ONESHOT_OTHER_KEY_PRESSED);
+			unregister_code(KC_LSFT);  // and disable shift (if active) - NOT CONFIDENT THIS WON'T BREAK THINGS!
+			ossft = 0;
 			return false;
 		  }
 		  return true;
