@@ -110,12 +110,14 @@ void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data);
 
 // Momentary layer/tap keys
 #define FN_CAPS  LT(_FN, KC_CAPS)
-#define FN_ESC   LT(_FN, KC_ESC)
-#define SPCNUM   LT(_NUM, KC_SPC)
-#define ENTPUNC  LT(_PUNC, KC_ENT)
-#define TABGUI   LT(_RGBGUI, KC_TAB)
-#define DOTFNJ   LT(_FNJ, KC_DOT)
-#define UTNUM    LT(_TNUM, KC_U)
+//#define FN_ESC   LT(_FN, KC_ESC)
+//#define SPCNUM   LT(_NUM, KC_SPC)
+//#define ENTPUNC  LT(_PUNC, KC_ENT)
+#define TABFNJ   LT(_FNJ, KC_TAB)
+#define DOTGUI   LT(_RGBGUI, KC_DOT)
+//#define ZROPUNC  LT(_PUNC, KC_0)
+#define QPUNC  LT(_PUNC, KC_Q)
+//#define UTNUM    LT(_TNUM, KC_U)
 
 // Tap-dance keys
 #define SPCHLD     TD(SPCLYRHLD)
@@ -163,21 +165,21 @@ const keypos_t hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[_COLEJDR] = LAYOUT(
 		RESET,   KC_UP,    KC_DOWN, KC_3,    KC_4,    KC_5,    KC_NO,   KC_NO,    KC_6,    KC_7,    KC_8,    KC_LEFT, KC_RIGHT, TCH_TOG,
-		OS_ALT,  KC_NUHS,  KC_2,    KC_J,    KC_Y,    KC_C,    KC_Z,    KC_V,     KC_M,    KC_H,    KC_K,    KC_9,    KC_INS,   KC_MUTE,
-		KC_NO,   KC_1,     UTNUM,   JALT_S,  JCTL_I,  JSFT_N,  KC_P,    KC_G,     JSFT_T,  JCTL_R,  JALT_E,  KC_B,    KC_0,     KC_NUBS,
-		KC_SCLN, TABGUI,   JWIN_A,  KC_W,    KC_COMM, KC_F,    KC_SLSH, KC_MINS,  KC_D,    KC_L,    KC_QUOT, JWIN_O,  DOTFNJ,   KC_NO,
-		KC_NO,   KC_NO,    KC_X,    KC_SPC,   KC_DEL,  SWP_BCK, SPCHLD,  KC_SFTENT,LYROSTG, KC_ESC,  KC_NO,   KC_Q,    KC_NO,    ALT_F4,
+		OS_ALT,  KC_NUHS,  KC_2,    KC_B,    KC_Y,    KC_C,    KC_Z,    KC_V,     KC_M,    KC_H,    KC_J,    KC_9,    KC_INS,   KC_MUTE,
+		KC_NO,   KC_X,     KC_U,    JALT_S,  JCTL_I,  JSFT_N,  KC_P,    KC_G,     JSFT_T,  JCTL_R,  JALT_E,  KC_K,    QPUNC,    KC_NUBS,
+		KC_SCLN, TABFNJ,   JWIN_A,  KC_W,    KC_COMM, KC_F,    KC_SLSH, KC_MINS,  KC_D,    KC_L,    KC_QUOT, JWIN_O,  DOTGUI,   KC_NO,
+		KC_NO,   KC_NO,    KC_1,    KC_SPC,  KC_DEL,  SWP_BCK, SPCHLD,  KC_SFTENT,LYROSTG, KC_ESC,  KC_NO,   KC_0,    KC_NO,    ALT_F4,
 
 		_______, _______,  _______, _______,                                                        _______, _______, _______,  _______,
-		KC_WH_D, KC_WH_U,  FNJ,     KC_CAPS, KC_NO,                                        KC_DEL,  KC_BSPC, RGBGUI,  KC_NO,    QWERTY
+		KC_WH_D, KC_WH_U,  KC_RIGHT,KC_LEFT, KC_NO,                                        KC_DEL,  KC_BSPC, KC_CAPS,  KC_NO,    QWERTY
 	),
 
     [_NUM] = LAYOUT(
         _______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  KC_PSCR,
-        _______, _______,  _______, KC_VOLD, KC_VOLU, _______, _______, KC_PAST,  KC_P7,   KC_P8,   KC_P9,   KC_BSPC, _______,  KC_NLCK,
-		_______, _______,  KC_MUTE, _______, _______, _______, KC_MNXT, KC_PSLS,  KC_P4,   KC_P5,   KC_P6,   KC_EQL,  KC_MINS,  _______,
-		_______, _______,  _______, _______, _______, KC_MPRV, KC_MPLY, KC_SCLN,  KC_P1,   KC_P2,   KC_P3,   KC_P0,   KC_PPLS,  _______,
-		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, KC_PDOT, KC_COMM,  KC_RALT,
+        _______, _______,  _______, KC_VOLD, KC_VOLU, _______, _______, KC_PAST,  KC_P7,   KC_P8,   KC_P9,   _______, _______,  KC_NLCK,
+		_______, _______,  KC_MUTE, _______, _______, _______, KC_MPLY, KC_PSLS,  KC_P4,   KC_P5,   KC_P6,   KC_EQL,  KC_MINS,  _______,
+		_______, _______,  _______, _______, _______, KC_MPRV, KC_MNXT, KC_SCLN,  KC_P1,   KC_P2,   KC_P3,   KC_P0,   KC_BSPC,  _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, KC_PDOT, _______, KC_PPLS, KC_COMM,  KC_RALT,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
 		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
@@ -185,10 +187,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_PUNC] = LAYOUT(
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
-		_______, _______,  _______, _______, KC_EXLM, KC_AT,   _______, _______,  KC_SLSH,  KC_AMPR, _______, _______, _______, _______,
-		_______, _______,  _______, JALT0,   JCTLLBRC,JSFTRBRC,_______, _______,  JSFTNUBS, JCTLNUHS,JALTPAST,_______, _______, _______,
-		_______, _______,  JWIN9,   _______, _______, _______, _______, _______,  KC_PND,   KC_DLR,  KC_PERC, JWINSCLN, KC_GRV, _______,
-		_______, _______,  _______, _______, _______, _______, _______, _______,  _______,  _______, _______, KC_CIRC, _______, _______,
+		_______, _______,  _______, KC_CIRC, KC_EXLM, KC_AT,   _______, _______,  KC_SLSH,  KC_AMPR, _______, _______, _______, _______,
+		_______, _______,  KC_GRV,  JALT0,   JCTLLBRC,JSFTRBRC,JWINSCLN, _______, JSFTNUBS, JCTLNUHS,JALTPAST,_______,  _______, _______,
+		_______, _______,  JWIN9,   _______, _______, _______, _______, _______,  KC_PND,   KC_DLR,  KC_PERC, _______, _______, _______,
+		_______, _______,  _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
 		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
@@ -196,10 +198,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
     [_RGBGUI] = LAYOUT(
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
-		_______, _______,  _______, _______, _______, _______, _______, RGB_MOD,  KC_HOME, KC_UP,   KC_END,  _______, _______,  _______,
-		_______, _______,  _______, _______, _______, _______, RGB_TOG, _______,  KC_LEFT, KC_DOWN, KC_RIGHT,KC_PGUP, RGB_HUI,  _______,
-		_______, _______,  _______, _______, RGB_VAI, RGB_VAD, _______, RGB_RMOD, KC_BSPC, KC_DEL,  RGB_SAI, KC_TAB,  KC_PGDN,  _______,
-		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, RGB_SAD, RGB_HUD,  _______,
+		_______, _______,  _______, RGB_SAI, RGB_HUD, RGB_HUI, _______, _______,  KC_HOME, KC_UP,   KC_END,  _______, _______,  _______,
+		_______, _______,  RGB_SAD, _______, _______, _______, RGB_TOG, _______,  KC_LEFT, KC_DOWN, KC_RIGHT,KC_PGUP, _______,  _______,
+		_______, _______,  _______, RGB_MOD, RGB_VAI, RGB_VAD, _______, _______,  KC_BSPC, KC_DEL,  _______, KC_TAB,  KC_PGDN,  _______,
+		_______, _______,  RGB_RMOD,_______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
 		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
@@ -433,12 +435,12 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 //        case SPCPUNC:
 //			print("layer punc\n");
 //			return true;  // And process the key normally!
-        case TABGUI:
+        case DOTGUI:
 			print("layer rgbgui\n"); // this isn't currently handled correctly by Python/Arduino,
 			// probably because tapping Tab sends two "layer rgbgui"s on one line. Should add logic
 			// to check whether the layer has actually been activated before sending.
 			return true;  // And process the key normally!
-        case DOTFNJ:
+        case TABFNJ:
 			print("layer fnj\n");
 			return true;  // And process the key normally!
         case KC_CAPS:
