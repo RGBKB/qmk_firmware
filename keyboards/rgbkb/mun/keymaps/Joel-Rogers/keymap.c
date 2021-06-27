@@ -43,7 +43,9 @@ enum {
 //Tap dance enums
 enum {
   SPCLYRHLD = 0,
-  LYROSTO = 1,
+  //LYROSTO = 1,
+  LYROSSFT = 1,
+  ENTLYRTO = 2,
 };
 
 int ossft = 0; // for toggling off shift after one-shot layer
@@ -52,8 +54,12 @@ int lyrlyr = 0; // for toggling off layer layer after making your selection
 int cur_dance (qk_tap_dance_state_t *state);
 void lyrhld_finished (qk_tap_dance_state_t *state, void *user_data);
 void lyrhld_reset (qk_tap_dance_state_t *state, void *user_data);
-void lyrostg_finished (qk_tap_dance_state_t *state, void *user_data);
-void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data);
+//void lyrostg_finished (qk_tap_dance_state_t *state, void *user_data);
+//void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data);
+void lyros_finished (qk_tap_dance_state_t *state, void *user_data);
+void lyros_reset (qk_tap_dance_state_t *state, void *user_data);
+void lyrto_finished (qk_tap_dance_state_t *state, void *user_data);
+void lyrto_reset (qk_tap_dance_state_t *state, void *user_data);
 
 
 // End tap-dance stuff
@@ -121,7 +127,9 @@ void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data);
 
 // Tap-dance keys
 #define SPCHLD     TD(SPCLYRHLD)
-#define LYROSTG    TD(LYROSTO)
+//#define LYROSTG    TD(LYROSTO)
+#define LYROSSFT    TD(LYROSSFT)
+#define ENTLYRTO    TD(ENTLYRTO)
 
 // Layerhld keys
 
@@ -168,7 +176,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_NUHS, KC_2,    KC_V,    KC_Y,    KC_C,    KC_Z,    TCH_TOG,  KC_MUTE,  KC_Q,     KC_M,    KC_H,    KC_MINS, KC_9,    KC_INS,
 		KC_J,    KC_U,    JALT_S,  JCTL_I,  JSFT_N,  KC_P,    KC_NO,    KC_NO,    KC_G,     JSFT_T,  JCTL_R,  JALT_E,  KC_K,    SLSHPUNC,
 		TABFNJ,  JWIN_A,  KC_W,    KC_COMM, KC_F,    KC_X,    KC_NO,    KC_NO,    KC_B,     KC_D,    KC_L,    KC_QUOT, JWIN_O,  DOTGUI,
-		KC_SCLN, KC_1,    KC_NO,   KC_DEL,  SWP_BCK, SPCHLD,  KC_SPC,   KC_BSPC,  KC_SFTENT,LYROSTG, KC_ESC,  KC_NO,   KC_0,    KC_NUBS,
+		KC_SCLN, KC_1,    KC_NO,   KC_SPC,  SWP_BCK, SPCHLD,  KC_DEL,   KC_BSPC,  LYROSSFT,ENTLYRTO, KC_ESC,  KC_NO,   KC_0,    KC_NUBS,
 
 		_______, _______,  _______, _______,                                                        _______, _______, _______,  _______,
 		KC_WH_D, KC_WH_U,  KC_RIGHT,KC_LEFT, KC_NO,                                        KC_DEL,  KC_BSPC, KC_CAPS,  KC_NO,    QWERTY
@@ -316,7 +324,12 @@ static tap lyrhld_state = {
   .state = 0
 };
 
-static tap lyrostg_state = {
+static tap lyros_state = {
+  .is_press_action = true,
+  .state = 0
+};
+
+static tap lyrto_state = {
   .is_press_action = true,
   .state = 0
 };
@@ -347,17 +360,87 @@ void lyrhld_reset (qk_tap_dance_state_t *state, void *user_data) {
   lyrhld_state.state = 0;
 }
 
-void lyrostg_finished (qk_tap_dance_state_t *state, void *user_data) {
-  lyrostg_state.state = cur_dance(state);
+//void lyrostg_finished (qk_tap_dance_state_t *state, void *user_data) {
+//  lyrostg_state.state = cur_dance(state);
+//  //layer_clear();  // This needs doing as long as the layer layer is below the layers being switched to,
+//  // otherwise you get trapped when using the toggle function. It does mean you can't stack layers though.
+//  switch (lyrostg_state.state) {
+//    case SINGLE_TAP:
+//    	set_oneshot_layer(_LYROS, ONESHOT_START);
+//    	clear_oneshot_layer_state(ONESHOT_PRESSED);
+//    	break;
+//    case SINGLE_HOLD:
+//    	layer_on(_LYRHLD);
+//    	break; // I reckon these can share a layer
+//    case DOUBLE_TAP:
+//    	set_oneshot_layer(_LYROS, ONESHOT_START);
+//    	register_code(KC_LSFT);
+//    	ossft = 2;  // This is just a way to get around oneshot not allowing mod presses - by setting this variable to
+//    	// 2 here, shift will be unregistered after two more key-ups (usually a layer-select plus on-layer keystroke).
+//		clear_oneshot_layer_state(ONESHOT_PRESSED);
+//		break;
+//  }
+//}
+//
+//void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data) {
+//  switch (lyrostg_state.state) {
+//    case SINGLE_TAP:
+//    	break;
+//    case SINGLE_HOLD:
+//    	layer_off(_LYRHLD);
+//    	break;
+//    case DOUBLE_TAP:
+//        break;
+//  }
+//  lyrostg_state.state = 0;
+//}
+
+
+void lyrto_finished (qk_tap_dance_state_t *state, void *user_data) {
+  lyrto_state.state = cur_dance(state);
   //layer_clear();  // This needs doing as long as the layer layer is below the layers being switched to,
   // otherwise you get trapped when using the toggle function. It does mean you can't stack layers though.
-  switch (lyrostg_state.state) {
+  switch (lyrto_state.state) {
+    case SINGLE_TAP:
+    	tap_code(KC_ENT);
+    	break;
+    case SINGLE_HOLD:
+    	layer_on(_LYRHLD);
+    	break; // I reckon these can share a layer
+    default: ;//in any other case, just send repeated Enters!
+    	int i;
+    	for (i = 1; i < state->count; i++){
+    		tap_code(KC_ENT);
+    	}
+    	break;
+  }
+}
+
+void lyrto_reset (qk_tap_dance_state_t *state, void *user_data) {
+  switch (lyrto_state.state) {
+    case SINGLE_TAP:
+    	break;
+    case SINGLE_HOLD:
+    	layer_off(_LYRHLD);
+    	break;
+    default:
+        break;
+  }
+  lyrto_state.state = 0;
+}
+
+
+void lyros_finished (qk_tap_dance_state_t *state, void *user_data) {
+  lyros_state.state = cur_dance(state);
+  //layer_clear();  // This needs doing as long as the layer layer is below the layers being switched to,
+  // otherwise you get trapped when using the toggle function. It does mean you can't stack layers though.
+  switch (lyros_state.state) {
     case SINGLE_TAP:
     	set_oneshot_layer(_LYROS, ONESHOT_START);
     	clear_oneshot_layer_state(ONESHOT_PRESSED);
     	break;
     case SINGLE_HOLD:
-    	layer_on(_LYRHLD);
+    	register_code(KC_LSFT);
     	break; // I reckon these can share a layer
     case DOUBLE_TAP:
     	set_oneshot_layer(_LYROS, ONESHOT_START);
@@ -369,22 +452,24 @@ void lyrostg_finished (qk_tap_dance_state_t *state, void *user_data) {
   }
 }
 
-void lyrostg_reset (qk_tap_dance_state_t *state, void *user_data) {
-  switch (lyrostg_state.state) {
+void lyros_reset (qk_tap_dance_state_t *state, void *user_data) {
+  switch (lyros_state.state) {
     case SINGLE_TAP:
     	break;
     case SINGLE_HOLD:
-    	layer_off(_LYRHLD);
+    	unregister_code(KC_LSFT);
     	break;
     case DOUBLE_TAP:
         break;
   }
-  lyrostg_state.state = 0;
+  lyros_state.state = 0;
 }
+
 
 qk_tap_dance_action_t tap_dance_actions[] = {
   [SPCLYRHLD]    = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrhld_finished, lyrhld_reset),
-  [LYROSTO]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrostg_finished, lyrostg_reset),
+  [ENTLYRTO]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrto_finished, lyrto_reset),
+  [LYROSSFT]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyros_finished, lyros_reset),
 };
 
 // End tap-dance stuff
