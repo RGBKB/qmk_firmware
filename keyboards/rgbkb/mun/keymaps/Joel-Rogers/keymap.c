@@ -1,6 +1,7 @@
 #include QMK_KEYBOARD_H
 //#include "raw_hid.h" // For sending data to host - doesn't work as Windows steals exclusive access to keyboards
 #include "print.h" // For sending custom @!
+#include "quantum.h"//probably unnecessary - just for debugging
 
 enum keymap_layers {
 	_COLEJDR,
@@ -43,7 +44,7 @@ enum {
 //Tap dance enums
 enum {
   SPCLYRHLD = 0,
-  //LYROSTO = 1,
+//LYROSTO = 1,
   LYROSSFT = 1,
   ENTLYRTO = 2,
 };
@@ -126,10 +127,10 @@ void lyrto_reset (qk_tap_dance_state_t *state, void *user_data);
 //#define UTNUM    LT(_TNUM, KC_U)
 
 // Tap-dance keys
-#define SPCHLD     TD(SPCLYRHLD)
+#define SPCHLDLYR     TD(SPCLYRHLD)
 //#define LYROSTG    TD(LYROSTO)
-#define LYROSSFT    TD(LYROSSFT)
-#define ENTLYRTO    TD(ENTLYRTO)
+#define OSLYRSFT    TD(LYROSSFT)
+#define ENTTOLYR    TD(ENTLYRTO)
 
 // Layerhld keys
 
@@ -176,7 +177,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_NUHS, KC_2,    KC_V,    KC_Y,    KC_C,    KC_Z,    TCH_TOG,  KC_MUTE,  KC_Q,     KC_M,    KC_H,    KC_MINS, KC_9,    KC_INS,
 		KC_J,    KC_U,    JALT_S,  JCTL_I,  JSFT_N,  KC_P,    KC_NO,    KC_NO,    KC_G,     JSFT_T,  JCTL_R,  JALT_E,  KC_K,    SLSHPUNC,
 		TABFNJ,  JWIN_A,  KC_W,    KC_COMM, KC_F,    KC_X,    KC_NO,    KC_NO,    KC_B,     KC_D,    KC_L,    KC_QUOT, JWIN_O,  DOTGUI,
-		KC_SCLN, KC_1,    KC_NO,   KC_SPC,  SWP_BCK, SPCHLD,  KC_DEL,   KC_BSPC,  LYROSSFT,ENTLYRTO, KC_ESC,  KC_NO,   KC_0,    KC_NUBS,
+		KC_SCLN, KC_1,    KC_NO,   KC_SPC,  SWP_BCK,SPCHLDLYR,KC_DEL,   KC_BSPC,  OSLYRSFT, ENTTOLYR,KC_ESC,  KC_NO,   KC_0,    KC_NUBS,
 
 		_______, _______,  _______, _______,                                                        _______, _______, _______,  _______,
 		KC_WH_D, KC_WH_U,  KC_RIGHT,KC_LEFT, KC_NO,                                        KC_DEL,  KC_BSPC, KC_CAPS,  KC_NO,    QWERTY
@@ -409,7 +410,7 @@ void lyrto_finished (qk_tap_dance_state_t *state, void *user_data) {
     	break; // I reckon these can share a layer
     default: ;//in any other case, just send repeated Enters!
     	int i;
-    	for (i = 1; i < state->count; i++){
+    	for (i = 1; i < state->count + 1; i++){
     		tap_code(KC_ENT);
     	}
     	break;
@@ -464,12 +465,12 @@ void lyros_reset (qk_tap_dance_state_t *state, void *user_data) {
   }
   lyros_state.state = 0;
 }
-
-
+//
+//
 qk_tap_dance_action_t tap_dance_actions[] = {
   [SPCLYRHLD]    = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrhld_finished, lyrhld_reset),
-  [ENTLYRTO]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrto_finished, lyrto_reset),
   [LYROSSFT]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyros_finished, lyros_reset),
+  [ENTLYRTO]     = ACTION_TAP_DANCE_FN_ADVANCED(NULL,lyrto_finished, lyrto_reset),
 };
 
 // End tap-dance stuff
