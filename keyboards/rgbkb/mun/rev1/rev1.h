@@ -1,3 +1,12 @@
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <https://github.com/Legonut> wrote this file.  As long as you retain this
+ * notice you can do whatever you want with this stuff. If we meet some day, and
+ * you think this stuff is worth it, you can buy me a beer in return. David Rauseo
+ * ----------------------------------------------------------------------------
+ */
+
 #pragma once
 
 #include "mun.h"
@@ -31,10 +40,4 @@
     { E20, E21, E30, E31, KC_NO, KC_NO, KC_NO }, \
     { T10, T11, T12, T13, T14,   KC_NO, KC_NO } \
 }
-
-#define NUMBER_OF_TOUCH_ENCODERS 2
-#define TOUCH_ENCODER_OPTIONS TOUCH_SEGMENTS + 2
-
-#define NUMBER_OF_ENCODERS 4
-#define ENCODER_OPTIONS 2
 // clang-format on

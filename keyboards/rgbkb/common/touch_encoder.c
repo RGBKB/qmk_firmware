@@ -1,19 +1,11 @@
 /*
-Copyright 2019 Ryan Caltabiano <https://github.com/XScorpion2>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 2 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <https://github.com/XScorpion2> wrote this file.  As long as you retain this
+ * notice you can do whatever you want with this stuff. If we meet some day, and
+ * you think this stuff is worth it, you can buy me a beer in return. Ryan Caltabiano
+ * ----------------------------------------------------------------------------
+ */
 
 #include "i2c_master.h"
 #include "keyboard.h"
@@ -24,6 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 // for memcpy
 #include <string.h>
+#include <transactions.h>
 
 #define I2C_ADDRESS 0x1C
 #define CALIBRATION_BIT 0x80
@@ -114,8 +107,6 @@ enum {  // QT2120 registers
 
 bool     touch_initialized  = false;
 bool     touch_disabled = false;
-bool     is_swiping = false;  // tracks whether the user is currently swiping
-bool     is_holding = false;  // tracks whether the user is currently holding
 uint8_t  touch_handness = 0;
 // touch_raw & touch_processed store the Detection Status, Key Status (x2), and Slider Position values
 uint8_t  touch_raw[4]       = { 0 };
@@ -123,6 +114,12 @@ uint8_t  touch_processed[4] = { 0 };
 
 uint16_t touch_timer        = 0;
 uint16_t touch_update_timer = 0;
+
+// For split transport only
+typedef struct {
+    uint8_t position;
+    uint8_t taps;
+} slave_touch_status_t;
 
 bool touch_slave_init = false;
 slave_touch_status_t touch_slave_state = { 0, 0 };
@@ -158,61 +155,22 @@ void touch_encoder_init(void) {
     touch_encoder_calibrate();
 }
 
-__attribute__((weak)) void touch_encoder_tapped_kb(uint8_t index, uint8_t section) { touch_encoder_tapped_user(index, section); }
-__attribute__((weak)) void touch_encoder_holding_kb(uint8_t index, uint8_t section) { touch_encoder_holding_user(index, section); }
-__attribute__((weak)) void touch_encoder_released_kb(uint8_t index, uint8_t section) { touch_encoder_released_user(index, section); }
-__attribute__((weak)) void touch_encoder_update_kb(uint8_t index, bool clockwise) { touch_encoder_update_user(index, clockwise); }
+__attribute__((weak)) bool touch_encoder_tapped_kb(uint8_t index, uint8_t section) { return touch_encoder_tapped_user(index, section); }
+__attribute__((weak)) bool touch_encoder_update_kb(uint8_t index, bool clockwise) { return touch_encoder_update_user(index, clockwise); }
 
-__attribute__((weak)) void touch_encoder_tapped_user(uint8_t index, uint8_t section) {}
-__attribute__((weak)) void touch_encoder_holding_user(uint8_t index, uint8_t section) {}
-__attribute__((weak)) void touch_encoder_released_user(uint8_t index, uint8_t section) {}
-__attribute__((weak)) void touch_encoder_update_user(uint8_t index, bool clockwise) {}
-
-static void touch_encoder_update_holding(void) {
-    uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
-    xprintf("holding %d %d\n", touch_handness, section);
-    if (is_keyboard_master()) {
-        if (!touch_disabled) {
-            touch_encoder_holding_kb(touch_handness, section);
-        }
-    }
-    else {
-        touch_slave_state.taps ^= (1 << section);
-    }
-}
-
-static void touch_encoder_update_release(void) {
-    uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
-    xprintf("released %d %d\n", touch_handness, section);
-    if (is_keyboard_master()) {
-        if (!touch_disabled) {
-            touch_encoder_released_kb(touch_handness, section);
-        }
-    }
-    else {
-        touch_slave_state.taps ^= (1 << section);
-    }
-}
+__attribute__((weak)) bool touch_encoder_tapped_user(uint8_t index, uint8_t section) { return true; }
+__attribute__((weak)) bool touch_encoder_update_user(uint8_t index, bool clockwise) { return true; }
 
 static void touch_encoder_update_tapped(void) {
-    // Started touching, begin counter for TOUCH_TERM
+    // Started touching, being counter for TOUCH_TERM
     if (touch_processed[0] & SLIDER_BIT) {
         touch_timer = timer_read() + TOUCH_TERM;
         return;
     }
+
     // Touch held too long, bail
-    if (timer_expired(timer_read(), touch_timer)) {
-#ifdef TOUCHBAR_HOLD_ENABLE
-    	if (!is_swiping) {//then the user was holding
-    		touch_encoder_update_release();
-			//when released, reset the holding boolean
-    		is_holding = false;
-    		return;
-    	}
-#endif
-    	is_swiping = false; // and the swiping boolean too
-		return;
-    }
+    if (timer_expired(timer_read(), touch_timer)) return;
+
     uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
     xprintf("tap %d %d\n", touch_handness, section);
     if (is_keyboard_master()) {
@@ -242,28 +200,11 @@ static void touch_encoder_update_position_common(uint8_t* position, uint8_t raw,
 
 static void touch_encoder_update_position(void) {
     // If the user touchs and moves enough, expire touch_timer faster and do encoder position logic instead
-	if (!timer_expired(timer_read(), touch_timer)) {
-        if ((uint8_t)(touch_raw[3] - touch_processed[3]) <= TOUCH_DEADZONE) return;  // bail if not held long enough AND not moved far enough
-        is_swiping = true;
+    if (!timer_expired(timer_read(), touch_timer)) {
+        if ((uint8_t)(touch_raw[3] - touch_processed[3]) <= TOUCH_DEADZONE) return;
         touch_timer = timer_read();
     }
-	// If the user has been holding one position (moving less than the deadzone) for longer
-	// than the TOUCH_TERM, then process as a hold (if this behaviour is enabled)
-#ifdef TOUCHBAR_HOLD_ENABLE
-	if (!is_swiping){//then user did not start swiping in the first TOUCH_TERM, but they MIGHT start later
-		if ((uint8_t)(touch_raw[3] - touch_processed[3]) <= TOUCH_DEADZONE) {// then user is still in the deadzone (i.e. holding)
-			if (!is_holding){//then this is the first pass where the holding has been noticed
-				is_holding = true;
-				touch_encoder_update_holding();
-			}
-			return;  // then bail
-		}  // otherwise, this looks like it's turned into a swipe, so move on to the code for that (below)
-		// but first, deal with releasing the held key
-		touch_encoder_update_release();
-		is_holding = false;
-		is_swiping = true;
-	}
-#endif
+
     if (is_keyboard_master()) {
         touch_encoder_update_position_common(&touch_processed[3], touch_raw[3], touch_handness);
     }
@@ -272,7 +213,37 @@ static void touch_encoder_update_position(void) {
     }
 }
 
-void touch_encoder_update(void) {
+void touch_encoder_update_slave(slave_touch_status_t slave_state) {
+    if (!touch_slave_init) {
+        touch_slave_state = slave_state;
+        touch_slave_init = true;
+        return;
+    }
+
+    if (touch_slave_state.position != slave_state.position) {
+        // Did a new slide event start?
+        uint8_t mask = (1 << 7);
+        if ((touch_slave_state.taps & mask) != (slave_state.taps & mask)) {
+            touch_slave_state.position = slave_state.position;
+        }
+        touch_encoder_update_position_common(&touch_slave_state.position, slave_state.position, !touch_handness);
+    }
+
+    if (touch_slave_state.taps != slave_state.taps) {
+        if (!touch_disabled) {
+            for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) {
+                uint8_t mask = (1 << section);
+                if ((touch_slave_state.taps & mask) != (slave_state.taps & mask)) {
+                    xprintf("tap %d %d\n", !touch_handness, section);
+                    touch_encoder_tapped_kb(!touch_handness, section);
+                }
+            }
+        }
+        touch_slave_state.taps = slave_state.taps;
+    }
+}
+
+void touch_encoder_update(int8_t transaction_id) {
     if (!touch_initialized) return;
 #if TOUCH_UPDATE_INTERVAL > 0
     if (!timer_expired(timer_read(), touch_update_timer)) return;
@@ -303,9 +274,16 @@ void touch_encoder_update(void) {
         }
     }
 
-    if (touch_raw[0] & SLIDER_BIT){// I removed the extra check here so I can hijack this function for holding.
-    	// Losing it doesn't seem to cause any problems or behaviour changes
+    if ((touch_raw[0] & SLIDER_BIT) && touch_processed[3] != touch_raw[3]) {
         touch_encoder_update_position();
+    }
+
+    if (is_keyboard_master()) {
+        slave_touch_status_t slave_state;
+        if (transaction_rpc_exec(transaction_id, sizeof(bool), &touch_disabled, sizeof(slave_touch_status_t), &slave_state)) {
+            if (memcmp(&touch_slave_state, &slave_state, sizeof(slave_touch_status_t)))
+                touch_encoder_update_slave(slave_state);
+        }
     }
 }
 
@@ -326,36 +304,7 @@ bool touch_encoder_toggled(void) {
     return touch_disabled;
 }
 
-void touch_encoder_get_raw(slave_touch_status_t* slave_state) {
-    memcpy(slave_state, &touch_slave_state, sizeof(slave_touch_status_t));
-}
-
-void touch_encoder_set_raw(slave_touch_status_t slave_state) {
-    if (!touch_slave_init) {
-        touch_slave_state = slave_state;
-        touch_slave_init = true;
-        return;
-    }
-
-    if (touch_slave_state.position != slave_state.position) {
-        // Did a new slide event start?
-        uint8_t mask = (1 << 7);
-        if ((touch_slave_state.taps & mask) != (slave_state.taps & mask)) {
-            touch_slave_state.position = slave_state.position;
-        }
-        touch_encoder_update_position_common(&touch_slave_state.position, slave_state.position, !touch_handness);
-    }
-
-    if (touch_slave_state.taps != slave_state.taps) {
-        if (!touch_disabled) {
-            for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) {
-                uint8_t mask = (1 << section);
-                if ((touch_slave_state.taps & mask) != (slave_state.taps & mask)) {
-                    xprintf("tap %d %d\n", !touch_handness, section);
-                    touch_encoder_tapped_kb(!touch_handness, section);
-                }
-            }
-        }
-        touch_slave_state.taps = slave_state.taps;
-    }
+void touch_encoder_slave_sync(uint8_t initiator2target_buffer_size, const void* initiator2target_buffer, uint8_t target2initiator_buffer_size, void* target2initiator_buffer) {
+    touch_disabled = *(bool*)initiator2target_buffer;
+    memcpy(target2initiator_buffer, &touch_slave_state, sizeof(slave_touch_status_t));
 }

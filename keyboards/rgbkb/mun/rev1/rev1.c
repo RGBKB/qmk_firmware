@@ -1,4 +1,19 @@
+/*
+ * ----------------------------------------------------------------------------
+ * "THE BEER-WARE LICENSE" (Revision 42):
+ * <https://github.com/Legonut> wrote this file.  As long as you retain this
+ * notice you can do whatever you want with this stuff. If we meet some day, and
+ * you think this stuff is worth it, you can buy me a beer in return. David Rauseo
+ * ----------------------------------------------------------------------------
+ */
+
 #include "rev1.h"
+
+#define NUMBER_OF_TOUCH_ENCODERS 2
+#define TOUCH_ENCODER_OPTIONS TOUCH_SEGMENTS + 2
+
+#define NUMBER_OF_ENCODERS 4
+#define ENCODER_OPTIONS 2
 
 typedef struct PACKED {
     uint8_t r;
@@ -33,38 +48,30 @@ static void process_encoder_matrix(encodermap_t pos) {
     });
 }
 
-static void process_encoder_matrix_press(encodermap_t pos) {
-    action_exec((keyevent_t){
-        .key = (keypos_t){.row = pos.r, .col = pos.c}, .pressed = true, .time = (timer_read() | 1) /* time should not be 0 */
-    });
-}
+bool encoder_update_kb(uint8_t index, bool clockwise) {
+    if (!encoder_update_user(index, clockwise))
+        return false;
 
-static void process_encoder_matrix_release(encodermap_t pos) {
-    action_exec((keyevent_t){
-        .key = (keypos_t){.row = pos.r, .col = pos.c}, .pressed = false, .time = (timer_read() | 1) /* time should not be 0 */
-    });
-}
-
-void encoder_update_kb(uint8_t index, bool clockwise) {
     // Mapping clockwise (typically increase) to zero, and counter clockwise (decrease) to 1
     process_encoder_matrix(encoder_map[index][clockwise ? 0 : 1]);
+    return false;
 }
 
-void touch_encoder_update_kb(uint8_t index, bool clockwise) {
+bool touch_encoder_update_kb(uint8_t index, bool clockwise) {
+    if (!touch_encoder_update_user(index, clockwise))
+        return false;
+
     // Mapping clockwise (typically increase) to zero, and counter clockwise (decrease) to 1
     process_encoder_matrix(touch_encoder_map[index][clockwise ? 0 : 1]);
+    return false;
 }
 
-void touch_encoder_tapped_kb(uint8_t index, uint8_t section) {
+bool touch_encoder_tapped_kb(uint8_t index, uint8_t section) {
+    if (!touch_encoder_tapped_user(index, section))
+        return false;
+
     process_encoder_matrix(touch_encoder_map[index][section + 2]);
-}
-
-void touch_encoder_holding_kb(uint8_t index, uint8_t section) {
-    process_encoder_matrix_press(touch_encoder_map[index][section + 2]);
-}
-
-void touch_encoder_released_kb(uint8_t index, uint8_t section) {
-    process_encoder_matrix_release(touch_encoder_map[index][section + 2]);
+    return false;
 }
 
 #ifdef RGB_MATRIX_ENABLE
