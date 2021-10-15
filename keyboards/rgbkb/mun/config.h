@@ -14,10 +14,14 @@
 /* USB Device descriptor parameter */
 #define VENDOR_ID       0x3535
 #define PRODUCT_ID      0x3505
+// Used to be a couple of page/usage IDs here, now removed
+//#define RAW_USAGE_PAGE  0xFF60
+//#define RAW_USAGE_ID   0x61
 #define MANUFACTURER    RGBKB
 #define PRODUCT         Mün
 
 #define USB_POLLING_INTERVAL_MS 1
+//#define DEBOUNCE 10 // old
 
 /* Matrix Configuration - Rows are doubled up */
 #define MATRIX_ROWS 14
@@ -32,9 +36,10 @@
 #define GPIO_INPUT_PIN_DELAY 10
 
 /* Touchbar adjustments */
-#define TOUCH_DEADZONE 50 // width of a "button", wider inputs will be interpreted as a swipe
-#define TOUCH_TERM 350 // time of a "button" touch, longer inputs will be a swipe
-#define TOUCH_RESOLUTION 25 // sensitivity of swipes, lower=faster
+#define TOUCH_DEADZONE 50 // width of a "button" for tap/hold purposes, wider inputs will be interpreted as a swipe
+#define TOUCH_TERM 350 // time of a "button" touch, longer inputs will be a swipe or hold - 350 (ms) works well,
+// but can set arbitrarily high (e.g. 50000) for hold behaviour
+#define TOUCH_RESOLUTION 10 // sensitivity of swipes, lower=faster
 
 /* Encoder Configuration */
 #define ENCODERS_PAD_A { B8, B9 }
@@ -52,7 +57,10 @@
 #define EE_HANDS
 #define SPLIT_USB_DETECT
 // also handles the SERIAL_USART_TX_PIN define
+//#define SPLIT_TRANSPORT_MIRROR //old
 #define SOFT_SERIAL_PIN A9
+//#define SERIAL_USART_SPEED (1 * 1024 * 1024)
+//#define SERIAL_USART_DRIVER SD1 //old
 #define SERIAL_USART_TX_PAL_MODE 7
 #define SERIAL_USART_TIMEOUT 5
 #define SERIAL_USART_DRIVER SD1
@@ -88,6 +96,8 @@
 #define RGB_MATRIX_FRAMEBUFFER_EFFECTS
 #define RGB_DISABLE_WHEN_USB_SUSPENDED
 
+// I used to skip the "if" here, so need to be sure I call for unlimited power somewhere next.
+//NB: Seems to be in mun/rules.mk
 #if RGB_UNLIMITED_POWER
   #define RGBLIGHT_LIMIT_VAL 255
 #else
@@ -104,3 +114,22 @@
 #define TOUCH_UPDATE_INTERVAL 33
 #define OLED_UPDATE_INTERVAL 33
 #define TAP_CODE_DELAY 5
+
+
+// My personal tweaks
+#define MOUSEKEY_WHEEL_TIME_TO_MAX 0 // Set time to reach max scroll speed (mouse keys; default 40)
+#define MOUSEKEY_WHEEL_MAX_SPEED 100  // Set max number of scroll steps (default 8)
+
+#define TAPPING_TERM 200  // Tap-dance/tap-hold term duration
+#define PERMISSIVE_HOLD  // Better for home row mods
+
+// Disable the default touchbar behaviour (currently necessary if you want to use the touchbar for
+// layer switching)
+//#define MUN_CUSTOM_TOUCH_ENCODERS //No longer necessary
+
+// Not currently interested in including the hold behaviour as I have no use for it, but I should check whether or not it works at some point.
+// Would also be interesting to overload this with tap-hold (-swipe??) behaviour!
+//#define TOUCHBAR_HOLD_ENABLE
+
+// Not currently working super well, but might be solved now the transport is working.
+#define RGB_DISABLE_WHEN_USB_SUSPENDED true

@@ -31,7 +31,7 @@
 #endif
 
 void touch_encoder_init(void);
-void touch_encoder_update(int8_t transaction_id);
+void touch_encoder_update(int8_t transaction_id);//used to be void argument
 
 void touch_encoder_calibrate(void);
 bool touch_encoder_calibrating(void);
@@ -40,15 +40,32 @@ void touch_encoder_toggle(void);
 bool touch_encoder_toggled(void);
 
 // Called when touch encoder is tapped, weak function overridable by the kb
-bool touch_encoder_tapped_kb(uint8_t index, uint8_t section);
+bool touch_encoder_tapped_kb(uint8_t index, uint8_t section); // used to return void
+
+#ifdef TOUCHBAR_HOLD_ENABLE
+// Called when touch encoder is held, weak function overridable by the kb
+	void touch_encoder_holding_kb(uint8_t index, uint8_t section);
+	void touch_encoder_released_kb(uint8_t index, uint8_t section);
+#endif
 
 // Called when touch encoder is slid, weak function overridable by the kb
-bool touch_encoder_update_kb(uint8_t index, bool clockwise);
+bool touch_encoder_update_kb(uint8_t index, bool clockwise);// used to return void
 
 // Called when touch encoder is tapped, weak function overridable by the user
-bool touch_encoder_tapped_user(uint8_t index, uint8_t section);
+bool touch_encoder_tapped_user(uint8_t index, uint8_t section);//used to return void
+
+
+#ifdef TOUCHBAR_HOLD_ENABLE
+	// Called when touch encoder is held, weak function overridable by the user
+	void touch_encoder_holding_user(uint8_t index, uint8_t section);
+	void touch_encoder_released_user(uint8_t index, uint8_t section);
+#endif
+
 
 // Called when touch encoder is slid, weak function overridable by the user
-bool touch_encoder_update_user(uint8_t index, bool clockwise);
+bool touch_encoder_update_user(uint8_t index, bool clockwise);//used to return void
+
+
+//Used to be a struct and a couple of (get/set_raw) functions here for transport, now removed.
 
 void touch_encoder_slave_sync(uint8_t initiator2target_buffer_size, const void* initiator2target_buffer, uint8_t target2initiator_buffer_size, void* target2initiator_buffer);

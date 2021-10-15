@@ -48,7 +48,7 @@ static void process_encoder_matrix(encodermap_t pos) {
     });
 }
 
-bool encoder_update_kb(uint8_t index, bool clockwise) {
+bool encoder_update_kb(uint8_t index, bool clockwise) {//used to return void
     if (!encoder_update_user(index, clockwise))
         return false;
 
@@ -56,6 +56,33 @@ bool encoder_update_kb(uint8_t index, bool clockwise) {
     process_encoder_matrix(encoder_map[index][clockwise ? 0 : 1]);
     return false;
 }
+
+
+
+
+// My tweaks for touchbar stuff - probably needs tweaking!
+static void process_encoder_matrix_press(encodermap_t pos) {
+    action_exec((keyevent_t){
+        .key = (keypos_t){.row = pos.r, .col = pos.c}, .pressed = true, .time = (timer_read() | 1) /* time should not be 0 */
+    });
+}
+
+static void process_encoder_matrix_release(encodermap_t pos) {
+    action_exec((keyevent_t){
+        .key = (keypos_t){.row = pos.r, .col = pos.c}, .pressed = false, .time = (timer_read() | 1) /* time should not be 0 */
+    });
+}
+
+
+void touch_encoder_holding_kb(uint8_t index, uint8_t section) {
+    process_encoder_matrix_press(touch_encoder_map[index][section + 2]);
+}
+
+void touch_encoder_released_kb(uint8_t index, uint8_t section) {
+    process_encoder_matrix_release(touch_encoder_map[index][section + 2]);
+//End tweaks
+
+
 
 bool touch_encoder_update_kb(uint8_t index, bool clockwise) {
     if (!touch_encoder_update_user(index, clockwise))
@@ -73,6 +100,8 @@ bool touch_encoder_tapped_kb(uint8_t index, uint8_t section) {
     process_encoder_matrix(touch_encoder_map[index][section + 2]);
     return false;
 }
+
+
 
 #ifdef RGB_MATRIX_ENABLE
 // clang-format off

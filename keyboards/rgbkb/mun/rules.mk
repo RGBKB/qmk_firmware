@@ -12,11 +12,15 @@ QUANTUM_LIB_SRC += i2c_master.c
 #
 BOOTMAGIC_ENABLE = no       # Enable Bootmagic Lite
 ## (Note that for BOOTMAGIC on Teensy LC you have to use a custom .ld script.)
-MOUSEKEY_ENABLE = no        # Mouse keys
+MOUSEKEY_ENABLE = yes        # Mouse keys (good for touchbar)
 EXTRAKEY_ENABLE = yes       # Audio control and System control
 CONSOLE_ENABLE = yes        # Console for debug
 COMMAND_ENABLE = no         # Commands for debug and configuration
 NKRO_ENABLE = yes           # Nkey Rollover - if this doesn't work, see here: https://github.com/tmk/tmk_keyboard/wiki/FAQ#nkro-doesnt-work
+MIDI_ENABLE = no            # MIDI controls
+UNICODE_ENABLE = no         # Unicode
+BLUETOOTH_ENABLE = no       # Enable Bluetooth with the Adafruit EZ-Key HID
+SWAP_HANDS_ENABLE = yes                # Enable swap hands commands
 AUDIO_ENABLE = no           # Audio output
 
 WS2812_DRIVER = pwm
@@ -24,6 +28,7 @@ RGBLIGHT_ENABLE = no        # Enable WS2812 RGB underlight.
 RGB_MATRIX_ENABLE = yes
 RGB_MATRIX_DRIVER = WS2812
 SLEEP_LED_ENABLE = no       # Breathing sleep LED during USB suspend
+RGB_UNLIMITED_POWER = yes   # Enable max power to the LEDs (not sure if this is working properly in mun/config.h
 
 OLED_ENABLE = yes
 OLED_DRIVER = SSD1306    # Enable the OLED Driver
@@ -42,3 +47,8 @@ OPT_DEFS += -Ikeyboards/rgbkb/common
 SRC += matrix.c
 
 DEFAULT_FOLDER = rgbkb/mun/rev1
+
+
+RAW_ENABLE = no                # Enable raw HID - currently disabled as is of almost no use on Windows
+CONSOLE_ENABLE = yes   # Enable debugging info output - will hijack for sending layer info to Arduino
+TAP_DANCE_ENABLE = yes

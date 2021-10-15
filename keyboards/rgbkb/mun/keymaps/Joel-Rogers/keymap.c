@@ -2,6 +2,7 @@
 //#include "raw_hid.h" // For sending data to host - doesn't work as Windows steals exclusive access to keyboards
 #include "print.h" // For sending custom @!
 #include "quantum.h"//probably unnecessary - just for debugging
+#include "common_oled.h" // Not sure if necessary for my keymap, but meh
 
 enum keymap_layers {
 	_COLEJDR,
@@ -21,7 +22,10 @@ enum keymap_layers {
 
 enum keymap_keycodes {
     // Disables touch processing
-    TCH_TOG = SAFE_RANGE
+    TCH_TOG = SAFE_RANGE,
+	MENU_BTN,
+	MENU_UP,
+	MENU_DN
 };
 
 
@@ -170,6 +174,19 @@ const keypos_t hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   // Right half touch encoders (last two positions are empty on both sides)
   {{0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {5, 6}, {6, 6}},
 };
+
+
+/* This keyboard is enabled with an RGB Menu Control system.
+This functionality is enabled, but still requires a little configuration based on your exact setup.
+The RGB Menu will appear on the Right Half's OLED and can be controlled by the MENU keycodes:
+MENU_BTN - Triggers a button action for the menu
+MENU_UP - Triggers an increase action for the menu
+MENU_DN - Triggers a decrease action for the menu
+
+To finish configuration for your board, you will want to change the default keycodes for an encoder on the right half.
+Encoder press keycode should be set to MENU_BTN, Clockwise should be MENU_UP, and Counter Clockwise should be MENU_DN.
+Depending on where you add an encoder to the right half will determin in the default keymap where you should put those keycodes.
+*/
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[_COLEJDR] = LAYOUT(
@@ -503,8 +520,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 		}
 	}
     switch (keycode) {
+    	case MENU_BTN:
+			if (record->event.pressed) {
+				rgb_menu_selection();
+			}
+			return false;
+		case MENU_UP:
+			if (record->event.pressed) {
+				rgb_menu_action(true);
+			}
+			return false;
+		case MENU_DN:
+			if (record->event.pressed) {
+				rgb_menu_action(false);
+			}
+			return false;
         case TCH_TOG:
-            touch_encoder_toggle();
+        	//if (record->event.pressed) { // Necessary/helpful?
+            	touch_encoder_toggle();
+            //} // ??
             return false;  // Skip all further processing of this key
 //        case NUM:
 //			print("layer num\n");
@@ -559,41 +593,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
 };
 
-#if defined(OLED_DRIVER_ENABLE)
-static void render_icon(void) {
-    static const char PROGMEM font_icon[] = {
-        0x9b,0x9c,0x9d,0x9e,0x9f,
-        0xbb,0xbc,0xbd,0xbe,0xbf,
-        0xdb,0xdc,0xdd,0xde,0xdf,0
-    };
-    oled_write_P(font_icon, false);
-}
-
-static void render_rgb_menu(void) {
-    static char buffer[53] = {0};
-    snprintf(buffer, sizeof(buffer), "Hue   %3d Satur %3d Value %3d Speed %3d Mode  %3d ",
-    rgb_matrix_config.hsv.h, rgb_matrix_config.hsv.s, rgb_matrix_config.hsv.v, rgb_matrix_config.speed, rgb_matrix_config.mode);
-    oled_write(buffer, false);
-}
-
+//#if defined(OLED_DRIVER_ENABLE) //Everything below this is new stuff/ modified from previous OLED handling
 static void render_layer(void) {
     // Host Keyboard Layer Status
     oled_write_P(PSTR("Layer"), false);
     switch (get_highest_layer(layer_state)) {
         case _QWERTY:
-            oled_write_ln_P(PSTR("QWERT"), false);
+            oled_write_ln_P(PSTR("QWRTY"), false);
             break;
         case _COLEMAK:
-            oled_write_ln_P(PSTR("Clmk "), false);
+            oled_write_ln_P(PSTR("Colemk"), false);
             break;
         case _GAME:
-            oled_write_ln_P(PSTR("GAME"), false);
+            oled_write_ln_P(PSTR("Game  "), false);
             break;
         case _FN:
             oled_write_ln_P(PSTR("FN   "), false);
             break;
         case _ADJUST:
-            oled_write_ln_P(PSTR("ADJ  "), false);
+            oled_write_ln_P(PSTR("Adjst"), false);
             break;
         default:
             oled_write_ln_P(PSTR("Undef"), false);
@@ -617,23 +635,23 @@ static void render_touch(void)
 }
 
 void oled_task_user(void) {
-    if (is_keyboard_master()) {
+    if (is_keyboard_left()) {
+        render_icon();
+        oled_write_P(PSTR("     "), false);
         render_layer();
         oled_write_P(PSTR("     "), false);
         render_leds();
         oled_write_P(PSTR("     "), false);
         render_touch();
-        oled_set_cursor(0, 12);
-        render_icon();
     }
     else {
-        render_rgb_menu();
-        oled_set_cursor(0, 12);
         render_icon();
+        oled_write_P(PSTR("     "), false);
+        render_rgb_menu();
     }
 }
 
 oled_rotation_t oled_init_user(oled_rotation_t rotation) {
     return OLED_ROTATION_270;
 }
-#endif
+//#endif

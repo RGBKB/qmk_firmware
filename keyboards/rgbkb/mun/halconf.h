@@ -7,6 +7,8 @@
  * ----------------------------------------------------------------------------
  */
 
+
+// Some stuff has changed here, but I assume it's correct.
 #pragma once
 
 #define HAL_USE_I2C TRUE
