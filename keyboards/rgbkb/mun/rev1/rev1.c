@@ -60,7 +60,7 @@ bool encoder_update_kb(uint8_t index, bool clockwise) {//used to return void
 
 
 
-// My tweaks for touchbar stuff - probably needs tweaking!
+// My tweaks for touchbar stuff
 static void process_encoder_matrix_press(encodermap_t pos) {
     action_exec((keyevent_t){
         .key = (keypos_t){.row = pos.r, .col = pos.c}, .pressed = true, .time = (timer_read() | 1) /* time should not be 0 */
@@ -74,12 +74,19 @@ static void process_encoder_matrix_release(encodermap_t pos) {
 }
 
 
-void touch_encoder_holding_kb(uint8_t index, uint8_t section) {
+bool touch_encoder_holding_kb(uint8_t index, uint8_t section) {//Added a few lines (and switched void->bool) by analogy with touch_encoder_tapped_kb
+	if (!touch_encoder_holding_user(index, clockwise))
+	        return false;
     process_encoder_matrix_press(touch_encoder_map[index][section + 2]);
+    return false;
 }
 
-void touch_encoder_released_kb(uint8_t index, uint8_t section) {
+bool touch_encoder_released_kb(uint8_t index, uint8_t section) {//Added a few lines (and switched void->bool) by analogy with touch_encoder_tapped_kb
+	if (!touch_encoder_released_user(index, clockwise))
+	        return false;
     process_encoder_matrix_release(touch_encoder_map[index][section + 2]);
+    return false;
+}
 //End tweaks
 
 

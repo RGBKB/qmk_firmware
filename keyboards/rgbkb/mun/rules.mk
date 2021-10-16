@@ -12,7 +12,9 @@ QUANTUM_LIB_SRC += i2c_master.c
 #
 BOOTMAGIC_ENABLE = no       # Enable Bootmagic Lite
 ## (Note that for BOOTMAGIC on Teensy LC you have to use a custom .ld script.)
-MOUSEKEY_ENABLE = yes        # Mouse keys (good for touchbar)
+MOUSEKEY_ENABLE = yes        # Mouse keys (good for touchbar) - might need to disable for steno!
+# See https://www.paulfioravanti.com/blog/starting-stenography-ergodox/
+STENO_ENABLE = yes 			# Stenography enable (Plover)
 EXTRAKEY_ENABLE = yes       # Audio control and System control
 CONSOLE_ENABLE = yes        # Console for debug
 COMMAND_ENABLE = no         # Commands for debug and configuration

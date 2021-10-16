@@ -27,11 +27,6 @@
 #   define TOUCH_UPDATE_INTERVAL 33
 #endif
 
-// Uncomment the line below to include all my custom code for touchbar. Keep it commented to
-// exclude this code and keep the main developers' version.
-// OR use TOUCHBAR_HOLD_ENABLE ?? See later
-//#define JDR_CUSTOM_TWEAKS 1
-
 enum {  // QT2120 registers
     QT_CHIP_ID = 0,
     QT_FIRMWARE_VERSION,
@@ -177,11 +172,11 @@ __attribute__((weak)) bool touch_encoder_update_user(uint8_t index, bool clockwi
 
 // Personal tweaks (touchbar)
 // I probably need to refactor these so that they all return (and/or handle) the booleans, as above.
-#ifdef TOUCHBAR_HOLD_ENABLE
-	__attribute__((weak)) void touch_encoder_holding_kb(uint8_t index, uint8_t section) { touch_encoder_holding_user(index, section); }
-	__attribute__((weak)) void touch_encoder_released_kb(uint8_t index, uint8_t section) { touch_encoder_released_user(index, section); }
-	__attribute__((weak)) void touch_encoder_holding_user(uint8_t index, uint8_t section) {}
-	__attribute__((weak)) void touch_encoder_released_user(uint8_t index, uint8_t section) {}
+#ifdef TOUCHBAR_HOLD_ENABLE  // This is toggled in rules.mk
+	__attribute__((weak)) bool touch_encoder_holding_kb(uint8_t index, uint8_t section) {return touch_encoder_holding_user(index, section); }
+	__attribute__((weak)) bool touch_encoder_released_kb(uint8_t index, uint8_t section) {return touch_encoder_released_user(index, section); }
+	__attribute__((weak)) bool touch_encoder_holding_user(uint8_t index, uint8_t section) { return true; }
+	__attribute__((weak)) bool touch_encoder_released_user(uint8_t index, uint8_t section) { return true; }
 
 	static void touch_encoder_update_holding(void) {
 	    uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);

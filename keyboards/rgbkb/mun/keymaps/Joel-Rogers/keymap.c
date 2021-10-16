@@ -3,6 +3,7 @@
 #include "print.h" // For sending custom @!
 #include "quantum.h"//probably unnecessary - just for debugging
 #include "common_oled.h" // Not sure if necessary for my keymap, but meh
+#include "keymap_steno.h" // For stenography!
 
 enum keymap_layers {
 	_COLEJDR,
@@ -18,6 +19,8 @@ enum keymap_layers {
 	_GAME,
 	_FN,
 	_ADJUST,
+	_STENO,
+	_MOUSE,
 };
 
 enum keymap_keycodes {
@@ -73,11 +76,13 @@ void lyrto_reset (qk_tap_dance_state_t *state, void *user_data);
 // Default Layers
 #define COLEJDR  DF(_COLEJDR)
 #define QWERTY   DF(_QWERTY)
+#define STENO    DF(_STENO)
 //#define COLEMAK  DF(_COLEMAK)
 //#define GAME     DF(_GAME)
 
 // Toggled layers
 #define RGBGUI   TG(_RGBGUI)
+#define MOUSE    TG(_MOUSE)
 
 // Momentary Layers
 #define FN       MO(_FN)
@@ -192,12 +197,12 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	[_COLEJDR] = LAYOUT(
 		RESET,   OS_ALT,  KC_3,    KC_4,    KC_5,    KC_UP,   KC_DOWN,  KC_LEFT,  KC_RIGHT, KC_6,    KC_7,    KC_8,    KC_NO,   ALT_F4,
 		KC_NUHS, KC_2,    KC_V,    KC_Y,    KC_C,    KC_Z,    TCH_TOG,  KC_MUTE,  KC_Q,     KC_M,    KC_H,    KC_MINS, KC_9,    KC_INS,
-		KC_J,    KC_U,    JALT_S,  JCTL_I,  JSFT_N,  KC_P,    KC_NO,    KC_NO,    KC_G,     JSFT_T,  JCTL_R,  JALT_E,  KC_K,    SLSHPUNC,
+		KC_J,    KC_U,    JALT_S,  JCTL_I,  JSFT_N,  KC_P,    STENO,    KC_NO,    KC_G,     JSFT_T,  JCTL_R,  JALT_E,  KC_K,    SLSHPUNC,
 		TABFNJ,  JWIN_A,  KC_W,    KC_COMM, KC_F,    KC_X,    KC_NO,    KC_NO,    KC_B,     KC_D,    KC_L,    KC_QUOT, JWIN_O,  DOTGUI,
 		KC_SCLN, KC_1,    KC_NO,   KC_SPC,  SWP_BCK,SPCHLDLYR,KC_DEL,   KC_BSPC,  OSLYRSFT, ENTTOLYR,KC_ESC,  KC_NO,   KC_0,    KC_NUBS,
 
 		_______, _______,  _______, _______,                                                        _______, _______, _______,  _______,
-		KC_WH_D, KC_WH_U,  KC_RIGHT,KC_LEFT, KC_NO,                                        KC_DEL,  KC_BSPC, KC_CAPS,  KC_NO,    QWERTY
+		KC_WH_D, KC_WH_U,  KC_RIGHT,KC_LEFT, KC_NO,                                        KC_DEL,  KC_BSPC, KC_CAPS,  MOUSE,    QWERTY
 	),
 
     [_NUM] = LAYOUT(
@@ -281,7 +286,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_LCTL, KC_LGUI, KC_LALT, COLEJDR, ADJUST,  KC_SPC,  KC_DEL,    KC_ENT,    KC_SPC,  KC_LEFT, KC_DOWN, KC_UP,   KC_RIGHT,KC_RCTL,
 
 		_______, _______,  _______, _______,                                                       _______, _______, _______, _______,
-		KC_HOME, KC_END,   NUM,   PUNC,    KC_NO,                                        KC_DEL, KC_BSPC, RGBGUI,  KC_CAPS,  COLEJDR
+		KC_HOME, KC_END,   NUM,     PUNC,    KC_NO,                                        KC_DEL, KC_BSPC, RGBGUI,  KC_CAPS,  COLEJDR
 	),
 
 	[_ADJUST] = LAYOUT(
@@ -316,6 +321,35 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
 		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
 	),
+	[_STENO] = LAYOUT(
+		XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,
+		XXXXXXX, XXXXXXX,  STN_TL,  STN_PL,  STN_HL,  STN_ST1, XXXXXXX, XXXXXXX,  STN_ST3, STN_FR,  STN_PR,  STN_LR,  XXXXXXX,  XXXXXXX,
+		XXXXXXX, STN_S1,   STN_KL,  STN_WL,  STN_RL,  XXXXXXX, COLEJDR, XXXXXXX,  XXXXXXX, STN_RR,  STN_BR,  STN_GR,  STN_TR,   STN_DR,
+		XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, STN_SR,   STN_ZR,
+		XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, STN_N1,  STN_A,   STN_O,   STN_E,    STN_U,   STN_N2,  XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,
+
+		XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
+		XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
+	),
+	// This layer is not yet complete (particularly RE: touchbar and mouse keys). Will work on later.
+	[_MOUSE] = LAYOUT(
+		_______,  _______, _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
+		_______,  _______, _______, KC_PGUP, KC_HOME, KC_END,  _______, _______,  _______,  _______, _______, _______, _______, _______,
+		_______,  KC_UP,   _______, KC_PGDN, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
+		KC_LEFT,  KC_DOWN, KC_RIGHT,_______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
+		_______,  _______, _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
+
+		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
+		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+	),
+};
+
+
+
+//Steno initialisation
+void matrix_init_user(void) {
+  // ...
+  steno_set_mode(STENO_MODE_GEMINI);
 };
 
 
@@ -364,6 +398,12 @@ void lyrhld_finished (qk_tap_dance_state_t *state, void *user_data) {
     	lyrlyr = 1;  // this might work to avoid masking of any lower layers - it results in the layer being disabled on the next key-up event
     	// (which in proper usage should be the layer selection keypress)
     	break;
+    default: ;//in any other case, just send repeated Space's!
+		int i;
+		for (i = 1; i < state->count + 1; i++){
+			tap_code(KC_SPC);
+		}
+		break;
   }
 }
 
@@ -374,6 +414,8 @@ void lyrhld_reset (qk_tap_dance_state_t *state, void *user_data) {
     case SINGLE_HOLD:
     	layer_clear();
     	break;//clears all layers on release (except base layer)
+    default:
+    	break;
   }
   lyrhld_state.state = 0;
 }
