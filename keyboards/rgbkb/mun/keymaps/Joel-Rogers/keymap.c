@@ -346,6 +346,15 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 
 
+// Touchbar mousekey testing
+void touch_encoder_raw_position(uint8_t* position) {
+	// The sole purpose of this function is to be called whenever the touchbar updates its position,
+	// hence updating a keymap.c local variable for position. This local variable should then be used
+	// in the internal logic of specially made "keycodes"/functions for the mousekey layer of the
+	// touchbar (both swipe and tap/hold buttons!), for working out mouse cursor speed.
+}
+
+
 //Steno initialisation
 void matrix_init_user(void) {
   // ...

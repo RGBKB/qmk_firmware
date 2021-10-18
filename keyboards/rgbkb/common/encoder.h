@@ -22,8 +22,8 @@
 void encoder_init(void);
 bool encoder_read(void);
 
-void encoder_update_kb(int8_t index, bool clockwise);
-void encoder_update_user(int8_t index, bool clockwise);
+//bool encoder_update_kb(uint8_t index, bool clockwise);
+//bool encoder_update_user(int8_t index, bool clockwise);//Commented out as these are already found in quantum/encoder.h
 
 #ifdef SPLIT_KEYBOARD
 void encoder_state_raw(uint8_t* slave_state);

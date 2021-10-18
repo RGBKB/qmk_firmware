@@ -7,6 +7,14 @@
  * ----------------------------------------------------------------------------
  */
 
+
+
+// Current issues - Need to get keymap.c to be aware of raw position (possibly using calls to
+// touch_encoder_raw_position at appropriate places? Not 100 % sure if touch_encoder.c is
+// "aware" that this function exists; may need to use a different approach); and handle the
+// slave_state passthrough/logic of holding (and release!); not sure exactly how to transfer
+// the logic from 'taps' and the 'mask' thereof :/
+
 #include "i2c_master.h"
 #include "keyboard.h"
 #include "touch_encoder.h"
@@ -109,10 +117,10 @@ bool     touch_initialized  = false;
 bool     touch_disabled = false;
 
 
-// Personal tweaks (touchbar)
-bool     is_swiping = false;  // tracks whether the user is currently swiping
-bool     is_holding = false;  // tracks whether the user is currently holding
-// Personal tweaks (touchbar) end
+// JDR tweaks (touchbar)
+bool     is_swiping = false;  // tracks whether the user is currently swiping - should probably make this a vector with per-touchbar indexes!
+bool     is_holding = false;  // tracks whether the user is currently holding - should probably make this a vector with per-touchbar and -section indexes!
+// JDR tweaks (touchbar) end
 
 
 uint8_t  touch_handness = 0;
@@ -127,10 +135,11 @@ uint16_t touch_update_timer = 0;
 typedef struct {
     uint8_t position;
     uint8_t taps;
+    uint8_t holds; // JDR tweak
 } slave_touch_status_t;
 
 bool touch_slave_init = false;
-slave_touch_status_t touch_slave_state = { 0, 0 };
+slave_touch_status_t touch_slave_state = { 0, 0, 0 }; // JDR tweak
 
 static bool write_register8(uint8_t address, uint8_t data) {
     i2c_status_t status = i2c_writeReg((I2C_ADDRESS << 1), address, &data, sizeof(data), I2C_TIMEOUT);
@@ -170,47 +179,49 @@ __attribute__((weak)) bool touch_encoder_tapped_user(uint8_t index, uint8_t sect
 __attribute__((weak)) bool touch_encoder_update_user(uint8_t index, bool clockwise) { return true; }
 
 
-// Personal tweaks (touchbar)
-// I probably need to refactor these so that they all return (and/or handle) the booleans, as above.
-#ifdef TOUCHBAR_HOLD_ENABLE  // This is toggled in rules.mk
-	__attribute__((weak)) bool touch_encoder_holding_kb(uint8_t index, uint8_t section) {return touch_encoder_holding_user(index, section); }
-	__attribute__((weak)) bool touch_encoder_released_kb(uint8_t index, uint8_t section) {return touch_encoder_released_user(index, section); }
-	__attribute__((weak)) bool touch_encoder_holding_user(uint8_t index, uint8_t section) { return true; }
-	__attribute__((weak)) bool touch_encoder_released_user(uint8_t index, uint8_t section) { return true; }
+// JDR tweaks (touchbar)
+__attribute__((weak)) bool touch_encoder_holding_kb(uint8_t index, uint8_t section) {return touch_encoder_holding_user(index, section); }
+__attribute__((weak)) bool touch_encoder_released_kb(uint8_t index, uint8_t section) {return touch_encoder_released_user(index, section); }
+__attribute__((weak)) bool touch_encoder_holding_user(uint8_t index, uint8_t section) { return true; }
+__attribute__((weak)) bool touch_encoder_released_user(uint8_t index, uint8_t section) { return true; }
 
-	static void touch_encoder_update_holding(void) {
-	    uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
-	    xprintf("holding %d %d\n", touch_handness, section);
-	    if (is_keyboard_master()) {
-	        if (!touch_disabled) {
-	            touch_encoder_holding_kb(touch_handness, section);
-	        }
-	    }
-	    else {
-	        touch_slave_state.taps ^= (1 << section);
-	    }
+static void touch_encoder_update_holding(void) {
+	uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
+	xprintf("holding %d %d\n", touch_handness, section);
+	if (is_keyboard_master()) {
+		if (!touch_disabled) {
+			touch_encoder_holding_kb(touch_handness, section);
+			touch_encoder_raw_position(*position);
+		}
 	}
-
-	static void touch_encoder_update_release(void) {
-	    uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
-	    xprintf("released %d %d\n", touch_handness, section);
-	    if (is_keyboard_master()) {
-	        if (!touch_disabled) {
-	            touch_encoder_released_kb(touch_handness, section);
-	        }
-	    }
-	    else {
-	        touch_slave_state.taps ^= (1 << section);
-	    }
+	else {
+		touch_slave_state.holds ^= (1 << section);// Just passes the problem onto slave_state function(s)
 	}
+}
 
-#endif
-			// Personal tweaks (touchbar) end
+static void touch_encoder_update_release(void) {
+	uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
+	xprintf("released %d %d\n", touch_handness, section);
+	if (is_keyboard_master()) {
+		if (!touch_disabled) {
+			touch_encoder_released_kb(touch_handness, section);
+			// Pretty sure there's no need to update the position, as the key being released should stop e.g. mouse cursor movement by itself.
+		}
+	}
+	else {
+		touch_slave_state.holds ^= (1 << section);
+	}
+	// This function is only ever called when holding has ended
+	is_holding = false;
+}
+// Personal tweaks (touchbar) end
 
 
 
 static void touch_encoder_update_tapped(void) {
     // Started touching, being counter for TOUCH_TERM
+	// Do I need to make this, and all subsequent checks, per-section vectors to ensure multiple buttons/both touchbars can be held
+	// at the same time? Is this useful/necessary?
     if (touch_processed[0] & SLIDER_BIT) {
         touch_timer = timer_read() + TOUCH_TERM;
         return;
@@ -218,18 +229,16 @@ static void touch_encoder_update_tapped(void) {
 
     // Touch held too long, bail
     if (timer_expired(timer_read(), touch_timer)) {
-#ifdef TOUCHBAR_HOLD_ENABLE
+#ifdef TOUCHBAR_HOLD_ENABLE// This is toggled in rules.mk (I THINK!??)
 	   if (!is_swiping) {//then the user was holding
 			   touch_encoder_update_release();
-					   //when released, reset the holding boolean
-			   is_holding = false;
 			   return;
 	   }
 #endif
-	   is_swiping = false; // and the swiping boolean too
-			   return;
+	   is_swiping = false; // if this code is reached, then they've stopped swiping (should this be a per-touchbar vector too??)
+	   return;
 	}
-
+    // If this code is reached, then a short tap has ended.
     uint8_t section = touch_processed[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
     xprintf("tap %d %d\n", touch_handness, section);
     if (is_keyboard_master()) {
@@ -254,6 +263,7 @@ static void touch_encoder_update_position_common(uint8_t* position, uint8_t raw,
     if (!touch_disabled) {
         //for (uint8_t i = 0; i < u_delta; i++)
             touch_encoder_update_kb(index, clockwise);
+            touch_encoder_raw_position(*position); // I think position is probably better than raw, but I'm not 100 % sure tbh.
     }
 }
 
@@ -272,13 +282,18 @@ static void touch_encoder_update_position(void) {
 		   if ((uint8_t)(touch_raw[3] - touch_processed[3]) <= TOUCH_DEADZONE) {// then user is still in the deadzone (i.e. holding)
 				   if (!is_holding){//then this is the first pass where the holding has been noticed
 						   is_holding = true;
-						   touch_encoder_update_holding();
+						   if (is_keyboard_master()) {
+							   touch_encoder_update_holding(&touch_processed[3], touch_raw[3], touch_handness);
+						   }
+						   else {
+							   touch_slave_state.holds ^= (1 << section); // Needs handling in update_slave, below!
+						   }
 				   }
 				   return;  // then bail
 		   }  // otherwise, this looks like it's turned into a swipe, so move on to the code for that (below)
 		   // but first, deal with releasing the held key
+		   // NEED TO DEAL WITH THIS IN A SLAVE-FRIENDLY WAY! Also be careful about ensuring touch_processed isn't updated between now and slave sync, or weird things might happen...
 		   touch_encoder_update_release();
-		   is_holding = false;
 		   is_swiping = true;
    }
 #endif
@@ -318,7 +333,22 @@ void touch_encoder_update_slave(slave_touch_status_t slave_state) {
             }
         }
         touch_slave_state.taps = slave_state.taps;
+
+    } // This is really complex and I don't think it works yet.
+#ifdef TOUCHBAR_HOLD_ENABLE
+    if (touch_slave_state.holds != slave_state.holds) {
+		if (!touch_disabled) {
+			for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) {
+				uint8_t mask = (1 << section);
+				if ((touch_slave_state.holds & mask) != (slave_state.holds & mask)) {
+					xprintf("hold %d %d\n", !touch_handness, section);
+					touch_encoder_holding_kb(!touch_handness, section);
+				}
+			}
+		}
+		touch_slave_state.taps = slave_state.taps;
     }
+#endif
 }
 
 void touch_encoder_update(int8_t transaction_id) {//This used to take void argument - what's the change?
@@ -332,8 +362,8 @@ void touch_encoder_update(int8_t transaction_id) {//This used to take void argum
     touch_processed[1] = touch_raw[1];
     touch_processed[2] = touch_raw[2];
 
-    if (touch_raw[0] != touch_processed[0]) {
-        uint8_t delta = touch_raw[0] ^ touch_processed[0];
+    if (touch_raw[0] != touch_processed[0]) { // Then the touchbar has had a change of state (of being touched or not, and at what position)
+        uint8_t delta = touch_raw[0] ^ touch_processed[0]; // Finds differences between the two bits (I think; "exclusive OR")
         touch_processed[0]  = touch_raw[0];
         // When calibrating, normal sensor behavior is supended
         if (delta & CALIBRATION_BIT) {
@@ -342,11 +372,12 @@ void touch_encoder_update(int8_t transaction_id) {//This used to take void argum
         if (delta & OVERFLOW_BIT) {
             xprintf("overflow %d\n", touch_processed[0] >> 6 & 1);
         }
-        if (delta & SLIDER_BIT) {
-            touch_processed[3] = touch_raw[3];
-            if (!is_keyboard_master()) {
-                touch_slave_state.position = touch_raw[3];
+        if (delta & SLIDER_BIT) { // i.e. ??
+            touch_processed[3] = touch_raw[3]; // Extracts the position of touching
+            if (!is_keyboard_master()) { // If slave...
+                touch_slave_state.position = touch_raw[3]; // Then tell slave functions that they need to process something (and give them the position)
                 touch_slave_state.taps ^= (1 << 7);
+                touch_slave_state.holds ^= (1 << 7);
             }
             touch_encoder_update_tapped();
         }
@@ -354,7 +385,8 @@ void touch_encoder_update(int8_t transaction_id) {//This used to take void argum
 
     //if ((touch_raw[0] & SLIDER_BIT) && touch_processed[3] != touch_raw[3]) {
     if (touch_raw[0] & SLIDER_BIT){// I removed the extra check here so I can hijack this function for holding.
-	   // Losing it doesn't seem to cause any problems or behaviour changes
+	   // Losing it doesn't seem to cause any problems or behaviour changes. Keeping it means that holding users need to wiggle very slightly before
+    	// touch_encoder_update_tapped (and hence touch_encoder_holding after some logic) will be reached/called the second (necessary) time
         touch_encoder_update_position();
     }
 

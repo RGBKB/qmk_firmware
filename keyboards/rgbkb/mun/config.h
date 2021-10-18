@@ -130,6 +130,3 @@
 // Not currently interested in including the hold behaviour as I have no use for it, but I should check whether or not it works at some point.
 // Would also be interesting to overload this with tap-hold (-swipe??) behaviour!
 //#define TOUCHBAR_HOLD_ENABLE
-
-// Not currently working super well, but might be solved now the transport is working.
-#define RGB_DISABLE_WHEN_USB_SUSPENDED true

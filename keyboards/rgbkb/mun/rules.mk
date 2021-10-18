@@ -54,3 +54,5 @@ DEFAULT_FOLDER = rgbkb/mun/rev1
 RAW_ENABLE = no                # Enable raw HID - currently disabled as is of almost no use on Windows
 CONSOLE_ENABLE = yes   # Enable debugging info output - will hijack for sending layer info to Arduino
 TAP_DANCE_ENABLE = yes
+
+TOUCHBAR_HOLD_ENABLE = yes # Not 100% sure this is where this "define" should go, but will see if it works

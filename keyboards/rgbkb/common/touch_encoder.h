@@ -43,15 +43,13 @@ bool touch_encoder_toggled(void);
 bool touch_encoder_tapped_kb(uint8_t index, uint8_t section); // used to return void
 
 
-
-#ifdef TOUCHBAR_HOLD_ENABLE
+// JDR touchbar tweaks
 // Called when touch encoder is held, weak function overridable by the kb
-	bool touch_encoder_holding_kb(uint8_t index, uint8_t section);
-	bool touch_encoder_released_kb(uint8_t index, uint8_t section);
-	// Called when touch encoder is held, weak function overridable by the user
-	bool touch_encoder_holding_user(uint8_t index, uint8_t section);
-	bool touch_encoder_released_user(uint8_t index, uint8_t section);
-#endif
+bool touch_encoder_holding_kb(uint8_t index, uint8_t section);
+bool touch_encoder_released_kb(uint8_t index, uint8_t section);
+// Called when touch encoder is held, weak function overridable by the user
+bool touch_encoder_holding_user(uint8_t index, uint8_t section);
+bool touch_encoder_released_user(uint8_t index, uint8_t section);
 
 
 

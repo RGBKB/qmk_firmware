@@ -75,14 +75,14 @@ static void process_encoder_matrix_release(encodermap_t pos) {
 
 
 bool touch_encoder_holding_kb(uint8_t index, uint8_t section) {//Added a few lines (and switched void->bool) by analogy with touch_encoder_tapped_kb
-	if (!touch_encoder_holding_user(index, clockwise))
+	if (!touch_encoder_holding_user(index, section))
 	        return false;
     process_encoder_matrix_press(touch_encoder_map[index][section + 2]);
     return false;
 }
 
 bool touch_encoder_released_kb(uint8_t index, uint8_t section) {//Added a few lines (and switched void->bool) by analogy with touch_encoder_tapped_kb
-	if (!touch_encoder_released_user(index, clockwise))
+	if (!touch_encoder_released_user(index, section))
 	        return false;
     process_encoder_matrix_release(touch_encoder_map[index][section + 2]);
     return false;
