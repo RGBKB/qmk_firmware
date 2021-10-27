@@ -10,7 +10,8 @@
 #include "rev1.h"
 
 #define NUMBER_OF_TOUCH_ENCODERS 2
-#define TOUCH_ENCODER_OPTIONS TOUCH_SEGMENTS + 2
+#define TOUCH_ENCODER_OPTIONS TOUCH_SEGMENTS + 3 // Edited this as well - need to check if this variable is used anywhere
+// apart from the touch_encoder_map below!
 
 #define NUMBER_OF_ENCODERS 4
 #define ENCODER_OPTIONS 2
@@ -32,9 +33,10 @@ const encodermap_t encoder_map[NUMBER_OF_ENCODERS][ENCODER_OPTIONS] =
 
 const encodermap_t touch_encoder_map[NUMBER_OF_TOUCH_ENCODERS][TOUCH_ENCODER_OPTIONS] = 
 {
-    { {  6, 0 }, {  6, 1 }, {  6, 2 }, {  6, 3 }, {  6, 4 } }, // Touch Encoder 1 matrix entries
-    { { 13, 0 }, { 13, 1 }, { 13, 2 }, { 13, 3 }, { 13, 4 } }  // Touch Encoder 2 matrix entries
-};
+    { {  6, 0 }, {  6, 1 }, {  6, 2 }, {  6, 3 }, {  6, 4 }, {  6, 5 } }, // Touch Encoder 1 matrix entries
+    { { 13, 0 }, { 13, 1 }, { 13, 2 }, { 13, 3 }, { 13, 4 }, { 13, 5 } }  // Touch Encoder 2 matrix entries
+}; // Note: Added an extra key per touch encoder to this map, so the third key is now a special key, pressed any
+// time the touch encoder is being touched. Allows users to use the raw position in custom (e.g. mousekey) functions.
 
 static void process_encoder_matrix(encodermap_t pos) {
     action_exec((keyevent_t){
@@ -77,14 +79,14 @@ static void process_encoder_matrix_release(encodermap_t pos) {
 bool touch_encoder_holding_kb(uint8_t index, uint8_t section) {//Added a few lines (and switched void->bool) by analogy with touch_encoder_tapped_kb
 	if (!touch_encoder_holding_user(index, section))
 	        return false;
-    process_encoder_matrix_press(touch_encoder_map[index][section + 2]);
+    process_encoder_matrix_press(touch_encoder_map[index][section + 3]);
     return false;
 }
 
 bool touch_encoder_released_kb(uint8_t index, uint8_t section) {//Added a few lines (and switched void->bool) by analogy with touch_encoder_tapped_kb
 	if (!touch_encoder_released_user(index, section))
 	        return false;
-    process_encoder_matrix_release(touch_encoder_map[index][section + 2]);
+    process_encoder_matrix_release(touch_encoder_map[index][section + 3]);
     return false;
 }
 //End tweaks
@@ -104,7 +106,7 @@ bool touch_encoder_tapped_kb(uint8_t index, uint8_t section) {
     if (!touch_encoder_tapped_user(index, section))
         return false;
 
-    process_encoder_matrix(touch_encoder_map[index][section + 2]);
+    process_encoder_matrix(touch_encoder_map[index][section + 3]);
     return false;
 }
 
