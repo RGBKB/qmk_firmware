@@ -93,12 +93,14 @@ bool touch_encoder_released_kb(uint8_t index, uint8_t section) {//Added a few li
 
 
 
-bool touch_encoder_update_kb(uint8_t index, bool clockwise) {
-    if (!touch_encoder_update_user(index, clockwise))
+bool touch_encoder_update_kb(uint8_t index, bool clockwise, uint8_t delta) { // refactored this to send appropriate number of
+	// deltas for big, fast swipes
+    if (!touch_encoder_update_user(index, clockwise, delta))
         return false;
 
-    // Mapping clockwise (typically increase) to zero, and counter clockwise (decrease) to 1
-    process_encoder_matrix(touch_encoder_map[index][clockwise ? 0 : 1]);
+    for (uint8_t i = 0; i < delta; i++) { // send as many swipe signals as appropriate
+		// Mapping clockwise (typically increase) to zero, and counter clockwise (decrease) to 1
+		process_encoder_matrix(touch_encoder_map[index][clockwise ? 0 : 1]);
     return false;
 }
 
