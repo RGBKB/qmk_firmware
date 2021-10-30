@@ -22,7 +22,9 @@
 #    error TOUCH_SEGMENTS must be between 1 and 5.
 #endif
 
-#ifndef TOUCH_DEADZONE
+#ifndef TOUCH_DEADZONE // With JDR's "multi-hold-enabling" (maybe?) timeout stuff, this needs to be
+// a significant amount less than the width of a touchbar section (i.e. 256/Number_of_sections =~ 85 for
+// 3 sections) for that code to work reliably
 #    define TOUCH_DEADZONE 50
 #endif
 
@@ -54,7 +56,7 @@ bool touch_encoder_released_user(uint8_t index, uint8_t section);
 
 
 // Called when touch encoder is slid, weak function overridable by the kb
-bool touch_encoder_update_kb(uint8_t index, bool clockwise);// used to return void
+bool touch_encoder_update_kb(uint8_t index, bool clockwise, uint8_t delta);// used to return void
 
 // Called when touch encoder is tapped, weak function overridable by the user
 bool touch_encoder_tapped_user(uint8_t index, uint8_t section);//used to return void

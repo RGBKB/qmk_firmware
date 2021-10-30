@@ -56,7 +56,8 @@ uint8_t mk_delay = MOUSEKEY_DELAY / 10;
 /* milliseconds between repeated motion events (0-255) */
 uint8_t mk_interval = MOUSEKEY_INTERVAL;
 /* steady speed (in action_delta units) applied each event (0-255) */
-uint8_t mk_max_speed = MOUSEKEY_MAX_SPEED;
+uint8_t mk_max_speed_vert = MOUSEKEY_MAX_SPEED;
+uint8_t mk_max_speed_horz = MOUSEKEY_MAX_SPEED;
 /* number of events (count) accelerating to steady speed (0-255) */
 uint8_t mk_time_to_max = MOUSEKEY_TIME_TO_MAX;
 /* ramp used to reach maximum pointer speed (NOT SUPPORTED) */
@@ -71,20 +72,38 @@ uint8_t mk_wheel_time_to_max = MOUSEKEY_WHEEL_TIME_TO_MAX;
 
 #    ifndef MK_COMBINED
 
-static uint8_t move_unit(void) {
+static uint8_t move_unit_vert(void) {
     uint16_t unit;
     if (mousekey_accel & (1 << 0)) {
-        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed) / 4;
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_vert) / 4;
     } else if (mousekey_accel & (1 << 1)) {
-        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed) / 2;
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_vert) / 2;
     } else if (mousekey_accel & (1 << 2)) {
-        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed);
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_vert);
     } else if (mousekey_repeat == 0) {
         unit = MOUSEKEY_MOVE_DELTA;
     } else if (mousekey_repeat >= mk_time_to_max) {
-        unit = MOUSEKEY_MOVE_DELTA * mk_max_speed;
+        unit = MOUSEKEY_MOVE_DELTA * mk_max_speed_vert;
     } else {
-        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed * mousekey_repeat) / mk_time_to_max;
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_vert * mousekey_repeat) / mk_time_to_max;
+    }
+    return (unit > MOUSEKEY_MOVE_MAX ? MOUSEKEY_MOVE_MAX : (unit == 0 ? 1 : unit));
+}
+
+static uint8_t move_unit_horz(void) {
+    uint16_t unit;
+    if (mousekey_accel & (1 << 0)) {
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_horz) / 4;
+    } else if (mousekey_accel & (1 << 1)) {
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_horz) / 2;
+    } else if (mousekey_accel & (1 << 2)) {
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_horz);
+    } else if (mousekey_repeat == 0) {
+        unit = MOUSEKEY_MOVE_DELTA;
+    } else if (mousekey_repeat >= mk_time_to_max) {
+        unit = MOUSEKEY_MOVE_DELTA * mk_max_speed_horz;
+    } else {
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_horz * mousekey_repeat) / mk_time_to_max;
     }
     return (unit > MOUSEKEY_MOVE_MAX ? MOUSEKEY_MOVE_MAX : (unit == 0 ? 1 : unit));
 }
@@ -127,6 +146,8 @@ const uint16_t mk_base_speed        = MOUSEKEY_BASE_SPEED;
 const uint16_t mk_decelerated_speed = MOUSEKEY_DECELERATED_SPEED;
 const uint16_t mk_initial_speed     = MOUSEKEY_INITIAL_SPEED;
 
+// Haven't split this into horz/vert because I can't see a use-case for touch encoders and kinetic/accelerating movement
+// - JDR
 static uint8_t move_unit(void) {
     float speed = mk_initial_speed;
 
@@ -168,20 +189,38 @@ static uint8_t wheel_unit(void) {
 
 #        else /* #ifndef MK_KINETIC_SPEED */
 
-static uint8_t move_unit(void) {
+static uint8_t move_unit_vert(void) {
     uint16_t unit;
     if (mousekey_accel & (1 << 0)) {
         unit = 1;
     } else if (mousekey_accel & (1 << 1)) {
-        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed) / 2;
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_vert) / 2;
     } else if (mousekey_accel & (1 << 2)) {
         unit = MOUSEKEY_MOVE_MAX;
     } else if (mousekey_repeat == 0) {
         unit = MOUSEKEY_MOVE_DELTA;
     } else if (mousekey_repeat >= mk_time_to_max) {
-        unit = MOUSEKEY_MOVE_DELTA * mk_max_speed;
+        unit = MOUSEKEY_MOVE_DELTA * mk_max_speed_vert;
     } else {
-        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed * mousekey_repeat) / mk_time_to_max;
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_vert * mousekey_repeat) / mk_time_to_max;
+    }
+    return (unit > MOUSEKEY_MOVE_MAX ? MOUSEKEY_MOVE_MAX : (unit == 0 ? 1 : unit));
+}
+
+static uint8_t move_unit_horz(void) {
+    uint16_t unit;
+    if (mousekey_accel & (1 << 0)) {
+        unit = 1;
+    } else if (mousekey_accel & (1 << 1)) {
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_horz) / 2;
+    } else if (mousekey_accel & (1 << 2)) {
+        unit = MOUSEKEY_MOVE_MAX;
+    } else if (mousekey_repeat == 0) {
+        unit = MOUSEKEY_MOVE_DELTA;
+    } else if (mousekey_repeat >= mk_time_to_max) {
+        unit = MOUSEKEY_MOVE_DELTA * mk_max_speed_horz;
+    } else {
+        unit = (MOUSEKEY_MOVE_DELTA * mk_max_speed_horz * mousekey_repeat) / mk_time_to_max;
     }
     return (unit > MOUSEKEY_MOVE_MAX ? MOUSEKEY_MOVE_MAX : (unit == 0 ? 1 : unit));
 }
@@ -218,8 +257,8 @@ void mousekey_task(void) {
 
     if ((tmpmr.x || tmpmr.y) && timer_elapsed(last_timer_c) > (mousekey_repeat ? mk_interval : mk_delay * 10)) {
         if (mousekey_repeat != UINT8_MAX) mousekey_repeat++;
-        if (tmpmr.x != 0) mouse_report.x = move_unit() * ((tmpmr.x > 0) ? 1 : -1);
-        if (tmpmr.y != 0) mouse_report.y = move_unit() * ((tmpmr.y > 0) ? 1 : -1);
+        if (tmpmr.x != 0) mouse_report.x = move_unit_horz() * ((tmpmr.x > 0) ? 1 : -1); // Changed these function calls.
+        if (tmpmr.y != 0) mouse_report.y = move_unit_vert() * ((tmpmr.y > 0) ? 1 : -1); // Hope they're correct...
 
         /* diagonal move [1/sqrt(2)] */
         if (mouse_report.x && mouse_report.y) {
@@ -263,13 +302,13 @@ void mousekey_on(uint8_t code) {
 #    endif /* #ifdef MK_KINETIC_SPEED */
 
     if (code == KC_MS_UP)
-        mouse_report.y = move_unit() * -1;
+        mouse_report.y = move_unit_vert() * -1;
     else if (code == KC_MS_DOWN)
-        mouse_report.y = move_unit();
+        mouse_report.y = move_unit_vert();
     else if (code == KC_MS_LEFT)
-        mouse_report.x = move_unit() * -1;
+        mouse_report.x = move_unit_horz() * -1;
     else if (code == KC_MS_RIGHT)
-        mouse_report.x = move_unit();
+        mouse_report.x = move_unit_horz();
     else if (code == KC_MS_WH_UP)
         mouse_report.v = wheel_unit();
     else if (code == KC_MS_WH_DOWN)

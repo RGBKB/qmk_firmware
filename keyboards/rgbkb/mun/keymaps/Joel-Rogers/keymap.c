@@ -691,6 +691,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 			master_pressed = record->event.pressed;
 			if (record->event.pressed) {
 				touchbars_touched += 1;
+				// The rest of the logic is handled in touch_encoder.c --> raw_position function (above).
 			} else {
 				// Release any relevant mousekeys being held on this side
 				if (mouse_upping) {
