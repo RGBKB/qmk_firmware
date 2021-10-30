@@ -567,7 +567,7 @@ void touch_encoder_send_strokes(uint8_t touch_handedness, half_touch_flags_t *ha
 		}
 		if (half_touch_prev_flags.posn != half_touch_flags.posn) {
 			// Send position to handler function in keymap.c
-			touch_encoder_raw_position(half_touch_flags.posn);
+			touch_encoder_raw_position(touch_handedness, half_touch_flags.posn);
 			half_touch_prev_flags.posn = half_touch_flags.posn; // And update the position
 		}
 }

@@ -123,6 +123,12 @@
 #define TAPPING_TERM 200  // Tap-dance/tap-hold term duration
 #define PERMISSIVE_HOLD  // Better for home row mods
 
+#define MOUSEKEY_INTERVAL 16 // 60 Hz
+#define MOUSEKEY_DELAY 0 // Movement starts immediately
+#define MOUSEKEY_TIME_TO_MAX 0 // Disables cursor acceleration
+#define MOUSEKEY_MAX_SPEED 7
+
+
 // Disable the default touchbar behaviour (currently necessary if you want to use the touchbar for
 // layer switching)
 //#define MUN_CUSTOM_TOUCH_ENCODERS //No longer necessary

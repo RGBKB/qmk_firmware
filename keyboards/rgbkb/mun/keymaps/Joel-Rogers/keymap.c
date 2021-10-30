@@ -1,9 +1,11 @@
 #include QMK_KEYBOARD_H
 //#include "raw_hid.h" // For sending data to host - doesn't work as Windows steals exclusive access to keyboards
 #include "print.h" // For sending custom @!
-#include "quantum.h"//probably unnecessary - just for debugging
+#include "quantum.h"// I think I need this for mousekeys and stuff?
 #include "common_oled.h" // Not sure if necessary for my keymap, but meh
 #include "keymap_steno.h" // For stenography!
+#include <math.h> // For maths (in touch encoder mouse cursor/special key stuff) -
+// no idea how much QMK knows about core C packages tbh.
 
 enum keymap_layers {
 	_COLEJDR,
@@ -23,12 +25,16 @@ enum keymap_layers {
 	_MOUSE,
 };
 
+// Keys with special (function) handling
 enum keymap_keycodes {
     // Disables touch processing
     TCH_TOG = SAFE_RANGE,
 	MENU_BTN,
 	MENU_UP,
-	MENU_DN
+	MENU_DN,
+	MOUSELYR,
+	SPEC_MASTER,// Keys for touchbar mousekeys/cursor
+	SPEC_SLAVE
 };
 
 
@@ -59,6 +65,26 @@ enum {
 int ossft = 0; // for toggling off shift after one-shot layer
 int lyrlyr = 0; // for toggling off layer layer after making your selection
 
+
+// Touchbar cursor/mousekey stuff
+	// Core functionality variables (non-configurable)
+int vertpos = 0;
+int horzpos = 0;
+int touchbars_touched = 0; // Needed for entering and exiting mousekey layer cleanly using the touchbar
+static bool master_pressed = false; // Tracks whether touchbar is being touched at all
+static bool slave_pressed = false;
+static bool mouse_upping = false;
+static bool mouse_downing = false;
+static bool mouse_lefting = false;
+static bool mouse_righting = false;
+
+	// User-configurable/-personalisable
+int spec_master_deadzone = 10; // Sets the width around the centre over which no cursor movement will be sent
+int spec_slave_deadzone = 10;
+int spec_master_centre = 180; // Sets the position (0-255) of the centre touchpoint, to account for using the
+// touchbar without the user taking their hands off of the homerow/wherever they're comfortable.
+int spec_slave_centre = 75; // Default to moderately thumb-proximal values in a left-hand master setup.
+
 int cur_dance (qk_tap_dance_state_t *state);
 void lyrhld_finished (qk_tap_dance_state_t *state, void *user_data);
 void lyrhld_reset (qk_tap_dance_state_t *state, void *user_data);
@@ -82,7 +108,7 @@ void lyrto_reset (qk_tap_dance_state_t *state, void *user_data);
 
 // Toggled layers
 #define RGBGUI   TG(_RGBGUI)
-#define MOUSE    TG(_MOUSE)
+//#define MOUSE    TG(_MOUSE) // This has more complex behaviour now, handled by MOUSELYR
 
 // Momentary Layers
 #define FN       MO(_FN)
@@ -167,7 +193,8 @@ const keypos_t hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   // Left half encoders (last three positions are empty on both sides)
   {{0, 12}, {1, 12}, {2, 12}, {3, 12}, {4, 12}, {5, 12}, {6, 12}},
   // Left half touch encoders (last two positions are empty on both sides)
-  {{0, 13}, {1, 13}, {2, 13}, {3, 13}, {4, 13}, {5, 13}, {6, 13}},
+  {{0, 13}, {1, 13}, {2, 13}, {3, 13}, {4, 13}, {5, 13}, {6, 13}},// {7, 13}},// pretty sure I can't extend this.
+  // Having a special key therefore reduces the maximal possible number of touch sections (tap/hold) by one.
   // Right half
   {{0, 0}, {1, 0}, {2, 0}, {3, 0}, {4, 0}, {5, 0}, {6, 0}},
   {{0, 1}, {1, 1}, {2, 1}, {3, 1}, {4, 1}, {5, 1}, {6, 1}},
@@ -176,8 +203,9 @@ const keypos_t hand_swap_config[MATRIX_ROWS][MATRIX_COLS] = {
   {{0, 4}, {1, 4}, {2, 4}, {3, 4}, {4, 4}, {5, 4}, {6, 4}},
   // Right half encoders (last three positions are empty on both sides)
   {{0, 5}, {1, 5}, {2, 5}, {3, 5}, {4, 5}, {5, 5}, {6, 5}},
-  // Right half touch encoders (last two positions are empty on both sides)
-  {{0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {5, 6}, {6, 6}},
+  // Right half touch encoders (last two positions are empty on both sides (perhaps only true when using
+  // just three touch sections??)))
+  {{0, 6}, {1, 6}, {2, 6}, {3, 6}, {4, 6}, {5, 6}, {6, 6}}//, {7, 6}},
 };
 
 
@@ -202,7 +230,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_SCLN, KC_1,    KC_NO,   KC_SPC,  SWP_BCK,SPCHLDLYR,KC_DEL,   KC_BSPC,  OSLYRSFT, ENTTOLYR,KC_ESC,  KC_NO,   KC_0,    KC_NUBS,
 
 		_______, _______,  _______, _______,                                                        _______, _______, _______,  _______,
-		KC_WH_D, KC_WH_U,  KC_RIGHT,KC_LEFT, KC_NO,                                        KC_DEL,  KC_BSPC, KC_CAPS,  MOUSE,    QWERTY
+		KC_WH_D, KC_WH_U,  MOUSELYR, KC_RIGHT,KC_LEFT, KC_NO,                       KC_NO,    KC_DEL,  KC_BSPC, KC_CAPS,  MOUSE,    QWERTY
 	),
 
     [_NUM] = LAYOUT(
@@ -212,8 +240,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______,  _______, _______, _______, KC_MPRV, KC_MNXT, _______, _______,  KC_SCLN,  KC_P1,   KC_P2,   KC_P3,   KC_P0,   KC_BSPC,
 		_______,  _______, _______, _______, _______, _______, _______, _______,  KC_RALT,  _______, KC_PDOT, _______, KC_PPLS, KC_COMM,
 
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______,  _______, _______, _______,                                                         _______, _______, _______, _______,
+		_______,  _______, _______, _______, _______, _______,                    _______,  _______, _______, _______, _______, _______
     ),
 
     [_PUNC] = LAYOUT(
@@ -223,8 +251,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______,  JWIN9,   _______, _______, _______, _______, _______, _______,  _______,  KC_PND,  KC_DLR,  KC_PERC, _______, _______,
 		_______,  _______, _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
 
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______,  _______, _______, _______,                                                         _______, _______, _______, _______,
+		_______,  _______, _______, _______, _______, _______,                    _______,  _______, _______, _______, _______, _______
     ),
 
     [_RGBGUI] = LAYOUT(
@@ -234,8 +262,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______,  _______, RGB_MOD, RGB_VAI, RGB_VAD, _______, _______, _______,  _______,  KC_BSPC, KC_DEL,  _______, KC_TAB,  KC_PGDN,
 		_______,  RGB_RMOD,_______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
 
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______,  _______, _______, _______,                                                         _______, _______, _______, _______,
+		_______,  _______, _______, _______, _______, _______,                    _______,  _______, _______, _______, _______, _______
     ),
 
 	[_FNJ] = LAYOUT(
@@ -245,8 +273,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_F1,    JWINF2,  _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, JWINF11, KC_F12,
 		_______,  _______, _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
 
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______,  _______, _______, _______,                                                         _______, _______, _______, _______,
+		_______,  _______, _______, _______, _______, _______,                    _______,  _______, _______, _______, _______, _______
 	),
 
 	[_TNUM] = LAYOUT(
@@ -256,8 +284,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______,  KC_1,    KC_2,    KC_3,    _______, _______,
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______,  _______, KC_0,    _______, _______, _______,
 
-		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______,  _______, _______, _______,                                                         _______, _______, _______, _______,
+		_______,  _______, _______, _______, _______, _______,                    _______,  _______, _______, _______, _______, _______
 	),
 	/* QWERTY
 	 * .--------------------------------------------------------------.  .--------------------------------------------------------------.
@@ -286,7 +314,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		KC_LCTL, KC_LGUI, KC_LALT, COLEJDR, ADJUST,  KC_SPC,  KC_DEL,    KC_ENT,    KC_SPC,  KC_LEFT, KC_DOWN, KC_UP,   KC_RIGHT,KC_RCTL,
 
 		_______, _______,  _______, _______,                                                       _______, _______, _______, _______,
-		KC_HOME, KC_END,   NUM,     PUNC,    KC_NO,                                        KC_DEL, KC_BSPC, RGBGUI,  KC_CAPS,  COLEJDR
+		KC_HOME, KC_END,  NUM,     PUNC,    KC_NO,   KC_NO,                       KC_NO, KC_DEL, KC_BSPC, RGBGUI,  KC_CAPS,  COLEJDR
 	),
 
 	[_ADJUST] = LAYOUT(
@@ -297,7 +325,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, RGB_RMOD,_______, RGB_MOD, _______, _______, _______, _______, _______, KC_P0,   KC_PDOT, KC_NLCK, QWERTY, _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______, _______, _______, _______, _______, _______,                   _______, _______, _______, _______, _______, _______
 	),
 
 	[_LYRHLD] = LAYOUT(
@@ -308,7 +336,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______, _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______, _______, _______, _______, _______,  _______,                    _______, _______, _______, _______, _______, _______
 	),
 
 	[_LYROS] = LAYOUT(
@@ -319,7 +347,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______, _______,  _______, _______, _______, _______, _______, _______,  _______, _______, _______, _______, _______,  _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		_______, _______, _______, _______, _______,  _______,                    _______, _______, _______, _______, _______, _______
 	),
 	[_STENO] = LAYOUT(
 		XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,
@@ -329,7 +357,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		XXXXXXX, XXXXXXX,  XXXXXXX, XXXXXXX, STN_N1,  STN_A,   STN_O,   STN_E,    STN_U,   STN_N2,  XXXXXXX, XXXXXXX, XXXXXXX,  XXXXXXX,
 
 		XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                                       XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,
-		XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,                                     XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
+		XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  _______,                    _______, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
 	),
 	// This layer is not yet complete (particularly RE: touchbar and mouse keys). Will work on later.
 	[_MOUSE] = LAYOUT(
@@ -340,18 +368,87 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 		_______,  _______, _______, _______, _______, _______, _______, _______,  _______,  _______, _______, _______, _______, _______,
 
 		_______, _______, _______, _______,                                                       _______, _______, _______, _______,
-		_______, _______, _______, _______, _______,                                     _______, _______, _______, _______, _______
+		XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX,  SPEC_MASTER,                    SPEC_SLAVE,  XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX, XXXXXXX
 	),
 };
 
 
 
-// Touchbar mousekey testing
-void touch_encoder_raw_position(uint8_t* position) {
-	// The sole purpose of this function is to be called whenever the touchbar updates its position,
+// Touchbar mousekey stuff
+void touch_encoder_raw_position(uint8_t touch_handedness, uint8_t position) {
+	// The sole purpose of this function is to be called from within touch_encoder.c
+	// whenever the touchbar updates its position,
 	// hence updating a keymap.c local variable for position. This local variable should then be used
 	// in the internal logic of specially made "keycodes"/functions for the mousekey layer of the
-	// touchbar (both swipe and tap/hold buttons!), for working out mouse cursor speed.
+	// touchbar (both swipe and tap/hold buttons!), for working out mouse cursor speed..
+	xprintf("raw position %d %d\n", index, raw);
+	// If the key's not being pressed/held/whatever, then don't need to do anything.
+	if (touch_handedness && master_pressed) {
+		vertpos = abs(position - spec_master_centre) - spec_master_deadzone; // Gets the useful value of the position,
+		// only greater than zero if further from the centre than the deadzone value.
+		if (vertpos > 0) { // Then something needs to be being held
+			mk_max_speed_vert = pow(vertpos,2); // need to update the mouse cursor speed (vertical)
+			// whatever the direction
+			if (position > spec_master_centre) { // Then touch is 'clockwise'/rightwards from centre -
+				// this code wants this to mean mouse cursor moves upwards
+				if (!mouse_upping) {// Then need to start pressing the key
+					// Could maybe skip these booleans/checks, but would be sending a lot of register_code's
+					// unnecessarily - not sure what the computational cost of this is.
+					register_code(KC_MS_UP);
+					mouse_upping = true; // And toggle this boolean on, to record that
+					if (mouse_downing) { // And toggle off downwards movement, if necessary
+						unregister_code(KC_MS_DOWN);
+						mouse_downing = false;
+					}
+				}
+			} else { // Then touch is 'anti-clockwise'/leftwards from centre
+				if (!mouse_downing) {// Then need to start pressing the key
+					register_code(KC_MS_DOWN);
+					mouse_downing = true; // And toggle this boolean on, to record that
+					if (mouse_upping) { // And toggle off downwards movement, if necessary
+						unregister_code(KC_MS_UP);
+						mouse_upping = false;
+					}
+				}
+			}
+		} else {
+			mk_max_speed_vert = 0; // Effectively disables (vertical) mousekey movement.
+			// NOTE THAT THIS NEEDS TO BE SPLIT INTO horizontal and vertical in quantum/mousekey.c!
+		}
+	}
+	else if (!touch_handedness && slave_pressed) {
+		horzpos = abs(position - spec_slave_centre) - spec_slave_deadzone; // Gets the useful value of the position,
+		// only greater than zero if further from the centre than the deadzone value.
+		if (horzpos > 0) { // Then something needs to be being held
+			mk_max_speed_horz = pow(horzpos,2); // need to update the mouse cursor speed (horizontal)
+			// whatever the direction
+			if (position > spec_slave_centre) { // Then touch is 'clockwise'/rightwards from centre -
+				// this code wants this to mean mouse cursor moves rightwards
+				if (!mouse_righting) {// Then need to start pressing the key
+					// Could maybe skip these booleans/checks, but would be sending a lot of register_code's
+					// unnecessarily - not sure what the computational cost of this is.
+					register_code(KC_MS_RIGHT);
+					mouse_righting = true; // And toggle this boolean on, to record that
+					if (mouse_lefting) { // And toggle off downwards movement, if necessary
+						unregister_code(KC_MS_LEFT);
+						mouse_lefting = false;
+					}
+				}
+			} else { // Then touch is 'anti-clockwise'/leftwards from centre
+				if (!mouse_lefting) {// Then need to start pressing the key
+					register_code(KC_MS_LEFT);
+					mouse_lefting = true; // And toggle this boolean on, to record that
+					if (mouse_righting) { // And toggle off downwards movement, if necessary
+						unregister_code(KC_MS_RIGHT);
+						mouse_righting = false;
+					}
+				}
+			}
+		} else {
+			mk_max_speed_horz = 0; // Effectively disables (horizontal) mousekey movement.
+			// NOTE THAT THIS NEEDS TO BE SPLIT INTO horizontal and vertical in quantum/mousekey.c!
+		}
+	}
 }
 
 
@@ -584,6 +681,51 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 		case MENU_DN:
 			if (record->event.pressed) {
 				rgb_menu_action(false);
+			}
+			return false;
+		case MOUSELYR:
+			if (!record->event.pressed) {// On key release
+				TG(_MOUSE); // Go to mousekeys layer
+			}
+		case SPEC_MASTER: // Switches for toggling on/off booleans for special touchbar keys
+			master_pressed = record->event.pressed;
+			if (record->event.pressed) {
+				touchbars_touched += 1;
+			} else {
+				// Release any relevant mousekeys being held on this side
+				if (mouse_upping) {
+					unregister_code(KC_MS_UP);
+					mouse_upping = false;
+				}
+				if (mouse_downing) {
+					unregister_code(KC_MS_DOWN);
+					mouse_downing = false;
+				}
+				touchbars_touched -= 1;
+				if (touchbars_touched = 0) { // Then both touchbars have been released, and the mousekey layer
+					// can be disabled
+					layer_off(_MOUSE);
+				}
+			}
+			return false; // Nothing else to process
+		case SPEC_SLAVE:
+			slave_pressed = record->event.pressed;
+			if (record->event.pressed) {
+				touchbars_touched += 1;
+			} else {
+				if (mouse_righting) {
+					unregister_code(KC_MS_RIGHT);
+					mouse_righting = false;
+				}
+				if (mouse_lefting) {
+					unregister_code(KC_MS_LEFT);
+					mouse_lefting = false;
+				}
+				touchbars_touched -= 1;
+				if (touchbars_touched = 0) { // Then both touchbars have been released, and the mousekey layer
+					// can be disabled
+					layer_off(_MOUSE);
+				}
 			}
 			return false;
         case TCH_TOG:
