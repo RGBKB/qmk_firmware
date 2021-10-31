@@ -8,8 +8,12 @@
  */
 
 
-// And code could almost certainly be refactored to take some stuff into functions (potentially ones which return true or false
-// depending on whether the calling function should also be escaped with 'return'?
+// TO-DO:
+// I need to either fundamentally understand how arrays within structs are handled in
+// terms of memory allocation and pointers (especially as passed to functions), OR
+// refactor those arrays so that they're no longer parts of structs at all (this would
+// likely make for more ugly code, but it's simpler and might take less time/skill to
+// bugfix.
 
 #include "i2c_master.h"
 #include "keyboard.h"
