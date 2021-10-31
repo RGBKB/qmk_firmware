@@ -56,14 +56,14 @@ bool touch_encoder_released_user(uint8_t index, uint8_t section);
 
 
 // Called when touch encoder is slid, weak function overridable by the kb
-bool touch_encoder_update_kb(uint8_t index, bool clockwise, uint8_t delta);// used to return void
+bool touch_encoder_update_kb(uint8_t index, bool clockwise, int8_t delta);// used to return void
 
 // Called when touch encoder is tapped, weak function overridable by the user
 bool touch_encoder_tapped_user(uint8_t index, uint8_t section);//used to return void
 
 
 // Called when touch encoder is slid, weak function overridable by the user
-bool touch_encoder_update_user(uint8_t index, bool clockwise);//used to return void
+bool touch_encoder_update_user(uint8_t index, bool clockwise, int8_t delta);//used to return void
 
 
 //Used to be a struct and a couple of (get/set_raw) functions here for transport, now removed.

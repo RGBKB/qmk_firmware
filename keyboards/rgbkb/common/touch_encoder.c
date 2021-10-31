@@ -201,18 +201,20 @@ bool touch_slave_init = false;
 //for (uint8_t i = 0; i < TOUCH_SEGMENTS; i++) {
 //	default_cycles_since_section_last_touched[i] = TOUCH_UPDATE_SECTION_TIMEOUT + 1;
 //}
-uint8_t default_cycles_since_section_last_touched[TOUCH_SEGMENTS] = {TOUCH_UPDATE_SECTION_TIMEOUT + 1 };
+//uint8_t default_cycles_since_section_last_touched[TOUCH_SEGMENTS] = {TOUCH_UPDATE_SECTION_TIMEOUT + 1 };
 uint8_t default_time_position_section_first_touched[TOUCH_SEGMENTS] = { 0 };
-half_touch_status_t touch_half_state_j//         = { // try not initialising yet, should all be zero by default anyway
+half_touch_status_t touch_half_state_j;//         = { // try not initialising yet, should all be zero by default anyway
 //		.position = 0, .taps = 0, .was_swiping = 0, .was_touching = 0, .swipes = 0, .holds = 0,
 //		.cycles_since_section_last_touched = default_cycles_since_section_last_touched,
 //		->time_position_section_first_touched = default_time_position_section_first_touched,
 //		->time_position_section_first_touched = default_time_position_section_first_touched }; // Used on both halves (separately)
-//half_touch_flags_t touch_half_flags_j          = { 0, 0, 0, 0, 0, 0, 0, 0 }; // Used on both halves (separately)
-//half_touch_flags_t touch_master_prev_flags_j   = { 0, 0, 0, 0, 0, 0, 0, 0 }; // Unused on slave side
-//half_touch_flags_t touch_slave_prev_flags_j    = { 0, 0, 0, 0, 0, 0, 0, 0 }; // Unused on slave side
+static bool structs_initialised = false; // So that structs can be initialised before the first time
+// they're needed, but using a for loop (so I can't do it here - needs to be inside a function :/)
+half_touch_flags_t touch_half_flags_j          = { 0, 0, 0, 0, 0, 0, 0, 0 }; // Used on both halves (separately)
+half_touch_flags_t touch_master_prev_flags_j   = { 0, 0, 0, 0, 0, 0, 0, 0 }; // Unused on slave side
+half_touch_flags_t touch_slave_prev_flags_j    = { 0, 0, 0, 0, 0, 0, 0, 0 }; // Unused on slave side
 
-memset(touch_half_state_j->cycles_since_section_last_touched, TOUCH_UPDATE_SECTION_TIMEOUT + 1, sizeof *touch_half_state_j->cycles_since_section_last_touched);
+//memset(touch_half_state_j->cycles_since_section_last_touched, TOUCH_UPDATE_SECTION_TIMEOUT + 1, sizeof *touch_half_state_j->cycles_since_section_last_touched);
 
 
 static bool write_register8(uint8_t address, uint8_t data) {
@@ -264,38 +266,38 @@ __attribute__((weak)) bool touch_encoder_released_user(uint8_t index, uint8_t se
 void touch_encoder_end_static_touch(uint8_t touch_handedness, half_touch_status_t *half_touch_state, half_touch_flags_t *half_touch_flags, uint8_t sectn) {
 	uint8_t mask = (1 << sectn);
 	// If it was being held...
-	if (half_touch_state.holds & mask) { // Extracts current hold status for each section in turn. Any form of swiping and/or button timeout will toggle this off and handle key release
+	if (half_touch_state->holds & mask) { // Extracts current hold status for each section in turn. Any form of swiping and/or button timeout will toggle this off and handle key release
 		xprintf("released %d %d\n", touch_handedness, sectn);
-		half_touch_flags.needs_releasing ^= mask; // set flag to release whatever key was being pressed
-		half_touch_state.holds &= ~mask; // Toggle bit off
-		half_touch_state.was_touching &= ~mask; // And this one (will be unnecessary in the case of multi-touching,
+		half_touch_flags->needs_releasing ^= mask; // set flag to release whatever key was being pressed
+		half_touch_state->holds &= ~mask; // Toggle bit off
+		half_touch_state->was_touching &= ~mask; // And this one (will be unnecessary in the case of multi-touching,
 		// but might as well have it and not need it...)
 		return; // and bail (to next loop)
 	} // else it may have been being tapped (not yet hit the threshold for 'hold').
 	// That'd've been recorded in, for this section...
-	if (half_touch_state.was_touching & mask) { // Extracts current hold status for each section in turn. Any form of swiping and/or button timeout will toggle this off and handle key release
+	if (half_touch_state->was_touching & mask) { // Extracts current hold status for each section in turn. Any form of swiping and/or button timeout will toggle this off and handle key release
 		xprintf("tapped %d %d\n", touch_handedness, sectn);
-		half_touch_flags.needs_tapping ^= mask; // Flip the bit (set flag to tap whatever key was being touched)
-		half_touch_state.was_touching &= ~mask; // Toggle bit off to record this section as completed
+		half_touch_flags->needs_tapping ^= mask; // Flip the bit (set flag to tap whatever key was being touched)
+		half_touch_state->was_touching &= ~mask; // Toggle bit off to record this section as completed
 		return; // and bail (to next loop)
 	}
 }
 
 void touch_encoder_timeout_increment(uint8_t touch_handedness, half_touch_status_t *half_touch_state, half_touch_flags_t *half_touch_flags) {
-	if (half_touch_flags.posn != touch_raw[3]) { // i.e. touching position has moved
+	if (half_touch_flags->posn != touch_raw[3]) { // i.e. touching position has moved
 		// Set the flag to send the new raw position to the handler function in keymap.c
-		half_touch_flags.posn = touch_raw[3]; // to update the position for the special function (not compatible
+		half_touch_flags->posn = touch_raw[3]; // to update the position for the special function (not compatible
 		// with multi-touching, and it doesn't care whether you're tap/hold/swiping, so just do it every time it
 		// changes.
 	}
 	for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) { // Iterates over all sections (1-3) on slave half
-		if (half_touch_state.cycles_since_section_last_touched[section] <= TOUCH_UPDATE_SECTION_TIMEOUT) {
-			if (half_touch_state.cycles_since_section_last_touched[section] = TOUCH_UPDATE_SECTION_TIMEOUT) {// Then it's time to time this one out
+		if (half_touch_state->cycles_since_section_last_touched[section] <= TOUCH_UPDATE_SECTION_TIMEOUT) {
+			if (half_touch_state->cycles_since_section_last_touched[section] == TOUCH_UPDATE_SECTION_TIMEOUT) {// Then it's time to time this one out
 				// But it could either be timing out because it's an old tap/hold, or because the swipe has moved on.
 				// Check if any previous logic has identified a swipe, in which case it would ALSO have handled key release,
 				// (and set all was_touchings to 0)
 				// so there's nothing to do
-				if (!half_touch_state.swipes) {
+				if (!half_touch_state->swipes) {
 					// Then a key has managed to go a full timeout period without a touch being recorded,
 					// and without a swipe being recognised on this bar. So...
 					touch_encoder_end_static_touch(touch_handedness, &half_touch_state, section);
@@ -305,11 +307,11 @@ void touch_encoder_timeout_increment(uint8_t touch_handedness, half_touch_status
 					// Note that this logic will lead to a delay of SECTION_TIMEOUT between a user releasing
 					// one section tap/hold and being able to initiate a swipe from a new key. This will be
 					// asymmetric between the first and second keys touched.
-					half_touch_state.position = touch_raw[3];
+					half_touch_state->position = touch_raw[3];
 				} // else do nothing (re: timeout handling) until next loop.
 			}
 			// Increment by one if not already max (i.e. not touched within timeout number of cycles)
-			half_touch_state.cycles_since_section_last_touched[section] += 1;
+			half_touch_state->cycles_since_section_last_touched[section] += 1;
 		}
 	}
 }
@@ -331,14 +333,14 @@ void touch_encoder_start_end_touch(uint8_t touch_handedness, half_touch_status_t
 			// so just check if anything needs releasing.
 
 			// Set flag to release the special key
-			half_touch_flags.special_release ^= (1 << 0); // Flip the bit
+			half_touch_flags->special_release ^= (1 << 0); // Flip the bit
 
 
 			// In the simplest possible case, the user was just sliding on this touchbar, so we KNOW nothing else was happening on this touchbar (since swiping overrules all other actions for the duration)
-			if (half_touch_state.swipes) {// Then user was swiping at last check, but obviously isn't now (since the bar isn't being touched), so update those flages
-				half_touch_state.was_swiping |= (1 << 0); // Toggle bit on (will be toggled off once...er... maybe I should toggle this off now??
+			if (half_touch_state->swipes) {// Then user was swiping at last check, but obviously isn't now (since the bar isn't being touched), so update those flages
+				half_touch_state->was_swiping |= (1 << 0); // Toggle bit on (will be toggled off once...er... maybe I should toggle this off now??
 				// Depends if it's important for and/or toggled in any later logic)
-				half_touch_state.swipes &= ~(1 << 0); // Toggle bit off
+				half_touch_state->swipes &= ~(1 << 0); // Toggle bit off
 				// There's nothing else to do in this case, since swipes are movement-based so don't need "releasing"
 				// Just flag all touchbar sections as not being touch-tracking atm (i.e. "All signals are fully resolved")
 				//half_touch_state.was_touching = 0; // Sets all bits in this to zero (should already have been done when the swipe was first
@@ -374,16 +376,16 @@ void touch_encoder_start_end_touch(uint8_t touch_handedness, half_touch_status_t
 		if (delta & SLIDER_BIT) { // I.e. the touch is new (it's changed, and it's not ended (above logic --> return)
 
 			// Set flags to keydown the special key and send position to handler function in keymap.c
-			half_touch_flags.special_press ^= (1 << 0); // Flip the bit
+			half_touch_flags->special_press ^= (1 << 0); // Flip the bit
 
 			// Calculate what section is being touched
 			uint8_t sect = touch_raw[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1); // I'm not completely sure that touch_raw will always be the
 			// correct choice here, considering the slave-master transport? This could do weird stuff, might need to refactor at all occurrences.
-			half_touch_state.position = touch_raw[3]; // Update the bar's "initial touch" position
-			half_touch_state.was_touching |= (1 << sect); // Toggles this section's was_touching bit on
-			half_touch_state.cycles_since_section_last_touched[sect] = 0; // And acknowledge the touch for timeout purposes
-			half_touch_state.time_section_first_touched[sect] = timer_read(); // And note the time
-			half_touch_state.position_section_first_touched[sect] = touch_raw[3]; // and the position
+			half_touch_state->position = touch_raw[3]; // Update the bar's "initial touch" position
+			half_touch_state->was_touching |= (1 << sect); // Toggles this section's was_touching bit on
+			half_touch_state->cycles_since_section_last_touched[sect] = 0; // And acknowledge the touch for timeout purposes
+			half_touch_state->time_section_first_touched[sect] = timer_read(); // And note the time
+			half_touch_state->position_section_first_touched[sect] = touch_raw[3]; // and the position
 			return true; // No keypresses to send yet (will be sent upon touchbar release (tap), timeout (multi-touch), or transition to swiping).
 		}
 	}
@@ -402,8 +404,8 @@ static void touch_encoder_update_position(uint8_t* position, uint8_t raw, uint8_
 	xprintf("pos %d %d\n", index, raw);
 	//uint8_t u_delta   = delta < 0 ? -delta : delta;
 	// Update flags for send_strokes
-	half_touch_flags.needs_swiping ^= (1 << 0); // flip the bit
-	half_touch_flags.delt = delta; // And flag how many delts to send
+	half_touch_flags->needs_swiping ^= (1 << 0); // flip the bit
+	half_touch_flags->delt = delta; // And flag how many delts to send
 }
 
 
@@ -414,7 +416,7 @@ void touch_encoder_ongoing_touch(uint8_t touch_handedness, half_touch_status_t *
 		// If the position has changed at all...
 		// Then deal with the main touch encoder stuff
 		//Check if it's previously been recognised as a swipe.
-		if (half_touch_state.swipes) {// Then user was swiping at last check, so must still be swiping now.
+		if (half_touch_state->swipes) {// Then user was swiping at last check, so must still be swiping now.
 			// Just check if a new swipe signal needs to be sent and update position if so
 			if ((uint8_t)(touch_raw[3] - half_touch_state.position) <= TOUCH_DEADZONE) return; // No need to do anything if true
 			// C/C++ auto-replace '.' with '->' (Window/Preferences/C/C++/Editor/Content Assist)
@@ -423,7 +425,7 @@ void touch_encoder_ongoing_touch(uint8_t touch_handedness, half_touch_status_t *
 			// else...
 			// movement was more than the touch deadzone, so a swipe must be sent and the position updated
 			if (!touch_disabled) {
-				touch_encoder_update_position(&half_touch_state.position, touch_raw[3], touch_handedness); // Still need to sort this function out
+				touch_encoder_update_position(&half_touch_state->position, touch_raw[3], touch_handedness); // Still need to sort this function out
 				return; // Then get out
 			}
 		}
@@ -454,34 +456,34 @@ void touch_encoder_ongoing_touch(uint8_t touch_handedness, half_touch_status_t *
 
 		// Calculate what section is being touched
 		uint8_t sect = touch_raw[3] / (UINT8_MAX / TOUCH_SEGMENTS + 1);
-		if (!half_touch_state.was_touching) {
+		if (!half_touch_state->was_touching) {
 			// Then this is a new touch for this section (since at least one timeout period ago)
-			half_touch_state.time_section_first_touched[sect] = timer_read(); // so note the time of this first touch
-			half_touch_state.position_section_first_touched[sect] = touch_raw[3]; // And note the position for slighty
+			half_touch_state->time_section_first_touched[sect] = timer_read(); // so note the time of this first touch
+			half_touch_state->position_section_first_touched[sect] = touch_raw[3]; // And note the position for slighty
 			// improved swipe recognition when two touches are recognised within one section before SECTION_TIMEOUT
 			// has expired.
-			half_touch_state.was_touching |= (1 << sect); // Toggles this section's was_touching bit on
+			half_touch_state->was_touching |= (1 << sect); // Toggles this section's was_touching bit on
 		}
-		half_touch_state.cycles_since_section_last_touched[sect] = 0; // And acknowledge the touch for timeout purposes
+		half_touch_state->cycles_since_section_last_touched[sect] = 0; // And acknowledge the touch for timeout purposes
 		// Check to see if there has been more movement within one section than the DEADZONE,
 		// in which case you can just immediately initiate a swipe
-		if ((half_touch_status.cycles_since_section_last_touched[sect] < TOUCH_UPDATE_SECTION_TIMEOUT) &&
-				half_touch_state.position_section_first_touched[sect] - touch_raw[3] ) {
+		if ((half_touch_status->cycles_since_section_last_touched[sect] < TOUCH_UPDATE_SECTION_TIMEOUT) &&
+				half_touch_state->position_section_first_touched[sect] - touch_raw[3] ) {
 			// if the section currently being touched has been touched within the latest TIMEOUT period
 			// AND is now being touched too far from where it was first touched, we'll declare this a swipe
 			// immediately
-			half_touch_state.position = half_touch_state.position_section_first_touched[sect];
+			half_touch_state->position = half_touch_state->position_section_first_touched[sect];
 			// Update the position for all future touchbar logic (until touching ends) to be this
 			// original section touchpoint
-			touch_encoder_update_position(&half_touch_state.position, touch_raw[3], touch_handedness);
-			half_touch_state.swipes |= (1 << 0); // toggle swiping bit on
+			touch_encoder_update_position(&half_touch_state->position, touch_raw[3], touch_handedness);
+			half_touch_state->swipes |= (1 << 0); // toggle swiping bit on
 			return;
 		}
 
 		// else..
 		uint8_t not_timed_out = 0;
 		for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) { // Iterates over all sections (1-3) on slave half
-			if (half_touch_status.cycles_since_section_last_touched[section] < TOUCH_UPDATE_SECTION_TIMEOUT) {
+			if (half_touch_status->cycles_since_section_last_touched[section] < TOUCH_UPDATE_SECTION_TIMEOUT) {
 				not_timed_out += 1; // Add up all the non-timed out sections (This will be one if
 				// TOUCH_UPDATE_SECTION_TIMEOUT is 1, regardless of what's pressed (since the current
 				// touch being processed will always have just been set to zero (< 1, the
@@ -495,16 +497,16 @@ void touch_encoder_ongoing_touch(uint8_t touch_handedness, half_touch_status_t *
 			// Note that this creates a critical dependency of the reliability of initiating swipes on
 			// the size of a section (via TOUCH_DEADZONE, e.g. = 256/3  =~ 85 for three sections).
 			// Then just check for movement within one section which is larger than the deadzone
-			if ((uint8_t)(touch_raw[3] - half_touch_state.position) <= TOUCH_DEADZONE) return; // No need to do anything if true
+			if ((uint8_t)(touch_raw[3] - half_touch_state->position) <= TOUCH_DEADZONE) return; // No need to do anything if true
 			// else...
 			// movement was more than the touch deadzone WITHIN one section (because all other sections
 			// have timed out, so a swipe must be sent
 			// and the position updated
 			if (!touch_disabled) {
-				touch_encoder_update_position(&half_touch_state.position, touch_raw[3], touch_handedness); // Still need to sort this function out
+				touch_encoder_update_position(&half_touch_state->position, touch_raw[3], touch_handedness); // Still need to sort this function out
 				// Note that this will result in larger swipes being sent when crossing section boundaries c.f. using
 				// &half_touch_state.position_section_first_touched[sect] here.
-				half_touch_state.swipes |= (1 << 0); // toggle swiping bit on
+				half_touch_state->swipes |= (1 << 0); // toggle swiping bit on
 			}
 			return;
 		}
@@ -538,52 +540,52 @@ void touch_encoder_check_states(uint8_t touch_handedness, half_touch_status_t *h
 // Handles actually sending the keystrokes after all/most of the variables/flags have been updated (using the logic in check_states().
 void touch_encoder_send_strokes(uint8_t touch_handedness, half_touch_flags_t *half_touch_prev_flags, half_touch_flags_t *half_touch_flags){
 	if (!touch_disabled) {// Don't do any of this if the touchbar is disabled
-		if (half_touch_prev_flags.needs_tapping != half_touch_flags.needs_tapping) {// Then at least one section needs releasing
+		if (half_touch_prev_flags->needs_tapping != half_touch_flags->needs_tapping) {// Then at least one section needs releasing
 			for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) { // Iterates over all sections (1-3) on slave half
 				uint8_t mask = (1 << section);
-				if ((half_touch_prev_flags.needs_tapping & mask) != (half_touch_flags.needs_tapping & mask)) { // If this bit has been flipped since last check
+				if ((half_touch_prev_flags->needs_tapping & mask) != (half_touch_flags->needs_tapping & mask)) { // If this bit has been flipped since last check
 					touch_encoder_tapped_kb(touch_handedness, section); // tap whatever key was being touched
-					half_touch_prev_flags.needs_tapping &= mask; // And update the record (flip the bit in prev_)
+					half_touch_prev_flags->needs_tapping &= mask; // And update the record (flip the bit in prev_)
 				}
 			}
 		}
-		if (half_touch_prev_flags.needs_press != half_touch_flags.needs_releasing) {// Then at least one section needs releasing
+		if (half_touch_prev_flags->needs_press != half_touch_flags->needs_releasing) {// Then at least one section needs releasing
 			for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) { // Iterates over all sections (1-3) on slave half
 				uint8_t mask = (1 << section);
-				if ((half_touch_prev_flags.needs_releasing & mask) != (half_touch_flags.needs_releasing & mask)) { // If this bit has been flipped since last check
+				if ((half_touch_prev_flags->needs_releasing & mask) != (half_touch_flags->needs_releasing & mask)) { // If this bit has been flipped since last check
 					touch_encoder_released_kb(touch_handedness, section); // release whatever key was being pressed
-					half_touch_prev_flags.needs_releasing &= mask; // And update the record (flip the bit in prev_)
+					half_touch_prev_flags->needs_releasing &= mask; // And update the record (flip the bit in prev_)
 				}
 			}
 		}
-		if (half_touch_prev_flags.needs_releasing != half_touch_flags.needs_releasing) {// Then at least one section needs releasing
+		if (half_touch_prev_flags->needs_releasing != half_touch_flags->needs_releasing) {// Then at least one section needs releasing
 			for (uint8_t section = 0; section < TOUCH_SEGMENTS; section++) { // Iterates over all sections (1-3) on slave half
 				uint8_t mask = (1 << section);
-				if ((half_touch_prev_flags.needs_releasing & mask) != (half_touch_flags.needs_releasing & mask)) { // If this bit has been flipped since last check
+				if ((half_touch_prev_flags->needs_releasing & mask) != (half_touch_flags->needs_releasing & mask)) { // If this bit has been flipped since last check
 					touch_encoder_released_kb(touch_handedness, section); // release whatever key was being pressed
-					half_touch_prev_flags.needs_releasing &= mask; // And update the record (flip the bit in prev_)
+					half_touch_prev_flags->needs_releasing &= mask; // And update the record (flip the bit in prev_)
 				}
 			}
 		}
-		if (half_touch_prev_flags.needs_swiping != half_touch_flags.needs_swiping) {
-			bool clockwise = (half_touch_flags.delt > 0); // This logic could be the wrong way round, but meh
-			touch_encoder_update_kb(touch_handedness, clockwise, abs(half_touch_flags.delt)); // hmm. This code originally ignored how many deltas
+		if (half_touch_prev_flags->needs_swiping != half_touch_flags->needs_swiping) {
+			bool clockwise = (half_touch_flags->delt > 0); // This logic could be the wrong way round, but meh
+			touch_encoder_update_kb(touch_handedness, clockwise, abs(half_touch_flags->delt)); // hmm. This code originally ignored how many deltas
 			// should be sent. I'll include them in my version. Sends the absolute (positive) magnitude of delta.
-			half_touch_prev_flags.needs_swiping ^= (1 << 0); // Flip the bit
+			half_touch_prev_flags->needs_swiping ^= (1 << 0); // Flip the bit
 		}
-		if (half_touch_prev_flags.special_press != half_touch_flags.special_press) {
+		if (half_touch_prev_flags->special_press != half_touch_flags->special_press) {
 			// Keydown the special key
 			touch_encoder_holding_kb(touch_handedness, -1);
-			half_touch_prev_flags.special_press ^= (1 << 0); // Flip the bit
+			half_touch_prev_flags->special_press ^= (1 << 0); // Flip the bit
 		}
-		if (half_touch_prev_flags.special_release != half_touch_flags.special_release) {
+		if (half_touch_prev_flags->special_release != half_touch_flags->special_release) {
 			touch_encoder_released_kb(touch_handedness, -1);
-			half_touch_prev_flags.special_release ^= (1 << 0); // Flip the bit
+			half_touch_prev_flags->special_release ^= (1 << 0); // Flip the bit
 		}
-		if (half_touch_prev_flags.posn != half_touch_flags.posn) {
+		if (half_touch_prev_flags->posn != half_touch_flags->posn) {
 			// Send position to handler function in keymap.c
-			touch_encoder_raw_position(touch_handedness, half_touch_flags.posn);
-			half_touch_prev_flags.posn = half_touch_flags.posn; // And update the position
+			touch_encoder_raw_position(touch_handedness, half_touch_flags->posn);
+			half_touch_prev_flags->posn = half_touch_flags->posn; // And update the position
 		}
 }
 
@@ -601,7 +603,11 @@ void touch_encoder_update(int8_t transaction_id) {//This used to take void argum
     touch_processed[1] = touch_raw[1];
     touch_processed[2] = touch_raw[2];
 
-
+    if (!structs_initialised) { // then this is the first run, so initialise/construct them
+    	for (uint8_t i = 0; i < TOUCH_SEGMENTS; i++) {
+    		touch_half_state_j->cycles_since_section_last_touched[i] = TOUCH_UPDATE_SECTION_TIMEOUT + 1;
+    	}
+    }
     // There are two points in the always-executed (no matter if master or slave) code which I can see that update values relevant
     // to the update_slave function - touch_slave_state.taps and .position.
     // I want to unpack that logic into the 'else' below, and make a perfectly analogous bit of code in the if (is_keyboard_master),
@@ -658,5 +664,10 @@ bool touch_encoder_toggled(void) {
 // &touch_slave_prev_flags_j.
 void touch_encoder_slave_sync(uint8_t initiator2target_buffer_size, const void* initiator2target_buffer, uint8_t target2initiator_buffer_size, void* target2initiator_buffer) {
     touch_disabled = *(bool*)initiator2target_buffer;
-    memcpy(target2initiator_buffer, &touch_slave_prev_flags_j, sizeof(half_touch_flags_t));
+    memcpy(target2initiator_buffer, &touch_slave_prev_flags_j, sizeof(half_touch_flags_t)); // I think
+    // this is probably run by slave, and copies the touch_slave_prev_flags_j to the initiator
+    // buffer for reading during master's nezt transaction_rpc_exec run (which copies this data
+    // to the target (slave?) to initiator (master?) buffer. I have a feeling that, if that's
+    // true, then the "prev" flags are the wrong ones to copy! Expect to newer register a change
+    // of state on targer touchbar if this is the case!
 }
