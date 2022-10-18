@@ -117,14 +117,14 @@ led_config_t g_led_config = { {
     {  54,  53,  52,  51,  50,  49,  48, NO_LED },
     {  55,  56,  57,  58,  59,  60,  61, NO_LED },
     {  68,  67,  66,  65,  64,  63,  62, NO_LED },
-    {  69,  70,  71,  72,  73,  74,  75,  76 },
+    {  NO_LED, NO_LED, NO_LED,  72,  73,  74,  75,  76 },
     {  NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED },
     { 119, 120, 121, 122, 123, 124, 125, NO_LED  },
     { 132, 131, 130, 129, 128, 127, 126, NO_LED  },
     { 133, 134, 135, 136, 137, 138, 139, NO_LED  },
     { 146, 145, 144, 143, 142, 141, 140, NO_LED  },
-    { 147, 148, 149, 150, 151, 152, 153, 154 },
-    {  NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED }
+    { NO_LED, NO_LED, NO_LED, 150, 151, 152, 153, 154 },
+    { NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED }
 }, { // ALL XY VALUES DIVIDE BY 2, THEN ADD 5
     // Left Half Perimeter
     {   1,   6 }, {   1,  13 }, {   1,  19 }, {   1,  25 }, {   1,  31 }, {   1,  37 }, {   1,  43 }, {   1,  49 }, {   4,  52 }, {  11,  52 },
