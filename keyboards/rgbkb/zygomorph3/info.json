@@ -17,28 +17,28 @@
         "extrakey": true,
         "mousekey": false,
         "nkro": true,
-	"rgblight": true
+//	"rgblight": true
     },
-    "rgblight": {
-        "pin": "GP15",
-        //"led_count": 54,
-	"hue_steps": 10,
-	"saturation_steps": 17,
-        "brightness_steps": 17,
-	"max_brightness": 64,
-	"animations": {
-		"alternating": true,
-		"breathing": true,
-		"christmas": true,
-		"knight": true,
-		"rainbow_mood": true,
-		"rainbow_swirl": true,
-		"rgb_test": true,
-		"snake": true,
-		"static_gradient": true,
-		"twinkle": true
-        }
-    },
+ //    "rgblight": {
+ //        "pin": "GP15",
+ //        //"led_count": 54,
+	// "hue_steps": 10,
+	// "saturation_steps": 17,
+ //        "brightness_steps": 17,
+	// "max_brightness": 64,
+	// "animations": {
+	// 	"alternating": true,
+	// 	"breathing": true,
+	// 	"christmas": true,
+	// 	"knight": true,
+	// 	"rainbow_mood": true,
+	// 	"rainbow_swirl": true,
+	// 	"rgb_test": true,
+	// 	"snake": true,
+	// 	"static_gradient": true,
+	// 	"twinkle": true
+ //        }
+ //   },
     "encoder": {
 	"enabled": true,
         "rotary": [
