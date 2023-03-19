@@ -1,5 +1,5 @@
 {
-    "keyboard_name": "Zygomorph 3",
+    "keyboard_name": "Mun 2",
     "manufacturer": "RGBKB",
     "url": "https://github.com/",
     "maintainer": "Legonut",
@@ -15,7 +15,7 @@
         "command": false,
         "console": false,
         "extrakey": true,
-        "mousekey": true,
+        "mousekey": false,
         "nkro": true,
         "rgb_matrix": true,
 //	"rgblight": true
@@ -46,9 +46,11 @@
     "encoder": {
 	"enabled": true,
         "rotary": [
-            { "pin_a": "GP7", "pin_b": "GP6", "resolution": 2 }
-            { "pin_a": "GP28", "pin_b": "GP29", "resolution": 2 }
-            { "pin_a": "GP5", "pin_b": "GP4", "resolution": 2 }
+            {
+		    "pin_a": "GP6",
+		    "pin_b": "GP7",
+		    "resolution": 2
+	    }
         ]
     },
 
