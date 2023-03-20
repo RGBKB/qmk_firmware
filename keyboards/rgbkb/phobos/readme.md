@@ -1,6 +1,6 @@
 # Phobos
 
-![Sol 3](https://raw.githubusercontent.com/noroadsleft/qmk_images/master/keyboards/rgbkb/sol3/rev1/rgbkb_sol3_rev1_01.jpg)
+![Phobos](https://cdn.shopify.com/s/files/1/0008/8827/5005/products/DSF3354_ffa1ad2b-39fe-4f2c-bdf8-c1872264ae4f_4000x.jpg)
 
 An extensible split keyboard with hotswap sockets and per-key RGB lighting.
 
@@ -10,11 +10,7 @@ An extensible split keyboard with hotswap sockets and per-key RGB lighting.
 
 Make example for this keyboard (after setting up your build environment):
 
-    make rgbkb/phobos/rev1:default
-
-Flashing example for this keyboard:
-
-    make rgbkb/phobos/rev1:default:flash
+    qmk compile -kb rgbkb/phobos -km default
 
 See the [build environment setup](https://docs.qmk.fm/#/getting_started_build_tools) and the [make instructions](https://docs.qmk.fm/#/getting_started_make_guide) for more information. Brand new to QMK? Start with our [Complete Newbs Guide](https://docs.qmk.fm/#/newbs).
 
