@@ -6,9 +6,9 @@ BOOTLOADER = rp2040
 
 # Touch encoder needs
 VPATH += keyboards/rgbkb/common
-#SRC += touch_encoder.c
-#SRC += common_oled.c
-#QUANTUM_LIB_SRC += i2c_master.c
+SRC += touch_encoder.c
+SRC += common_oled.c
+QUANTUM_LIB_SRC += i2c_master.c
 
 # Build Options
 #   change yes to no to disable
@@ -38,3 +38,5 @@ SPLIT_KEYBOARD = yes
 SERIAL_DRIVER = vendor
 
 OPT_DEFS += -DOLED_FONT_H=\"keyboards/rgbkb/common/glcdfont.c\"
+
+DEFAULT_FOLDER = rgbkb/zygomorph3/rev1

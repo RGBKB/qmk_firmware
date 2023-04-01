@@ -17,4 +17,10 @@
 
 #pragma once
 
+#if defined(KEYBOARD_rgbkb_zygomorph3_rev1)
+#    include "rev1.h"
+#endif
+
 #include "quantum.h"
+#include "touch_encoder.h"
+#include "common_oled.h"
