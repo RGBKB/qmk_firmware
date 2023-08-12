@@ -16,8 +16,10 @@
 // Last pins reserved for encoder / touch encoder support
 // Empty matrix entries used for encoder / touch encoder support
 #define MATRIX_ROW_PINS { GP10, GP9, GP1, GP2, GP3, NO_PIN, NO_PIN }
-#define MATRIX_COLS 7
-#define MATRIX_COL_PINS { GP20, GP19, GP23, GP21, GP22, GP18, GP29 }
+#define MATRIX_ROW_PINS_RIGHT { GP10, GP9, GP1, GP2, GP3, NO_PIN, NO_PIN}
+#define MATRIX_COLS 8
+#define MATRIX_COL_PINS { GP26, GP29, GP18, GP22, GP21, GP23, GP19, GP20 }
+#define MATRIX_COL_PINS_RIGHT { GP28, GP29, GP18, GP22, GP21, GP20, GP19, GP23}
 
 /* Touchbar adjustments */
 #define TOUCH_DEADZONE 50 // width of a "button", wider inputs will be interpreted as a swipe
@@ -27,7 +29,10 @@
 
 /* Encoder Configuration */
 #define ENCODERS_PAD_A { GP7, GP27, GP4 }
+#define ENCODERS_PAD_A_RIGHT { GP27, GP7, GP5 }
+
 #define ENCODERS_PAD_B { GP6, GP28, GP5 }
+#define ENCODERS_PAD_B_RIGHT { GP26, GP6, GP4 }
 
 /* COL2ROW or ROW2COL */
 #define DIODE_DIRECTION COL2ROW
@@ -57,10 +62,10 @@
 
 // NOTE: WS2812 uses the RGBLED_NUM define, RGB Matrix uses DRIVER_LED_TOTAL...
 // so make sure both are set and the same
-#define RGBLED_NUM 100
+#define RGBLED_NUM 70
 #define DRIVER_LED_TOTAL RGBLED_NUM
-#define RGB_MATRIX_SPLIT { 50, 50 }
-#define RGB_MATRIX_CENTER { 105, 38 }
+#define RGB_MATRIX_SPLIT { 35, 35 }
+#define RGB_MATRIX_CENTER { 117, 46 }
 #define RGB_MATRIX_MAXIMUM_BRIGHTNESS 255
 #define RGB_MATRIX_LED_FLUSH_LIMIT 33
 #define RGB_MATRIX_LED_PROCESS_LIMIT 10
