@@ -56,7 +56,7 @@
     {   R10,   R11, R12, R13, R14, R15, R16, R17,}, \
     { KC_NO,   R21, R22, R23, R24, R25, R26, R27,}, \
     {   R30,   R31, R32, R33, R34, R35, R36, R37,}, \
-    { KC_NO, KC_NO, R42, R43, R44, R45, KC_NO, R47,}, \
+    { KC_NO, KC_NO, R42, R43, R44, R45, R46, R47,}, \
     { E3L, E3R, E4L, E4R, E5L, E5R, KC_NO, KC_NO,}, \
     { RT0, RT1, RT2, RSL, RSR, KC_NO, KC_NO, KC_NO } \
 }
