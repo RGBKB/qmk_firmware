@@ -24,8 +24,8 @@
         "rgb_matrix": true
     },
     "rgblight": {
-        "led_count": 156,
-        "split_count": [78, 78],
+        //"led_count": 156,
+        //"split_count": [78, 78],
         "animations": {
             "breathing": true,
             "rainbow_mood": true,

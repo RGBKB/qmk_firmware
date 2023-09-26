@@ -80,20 +80,20 @@ bool touch_encoder_tapped_kb(uint8_t index, uint8_t section) {
 #ifdef RGB_MATRIX_ENABLE
 // clang-format off
 led_config_t g_led_config = { {
-    {   0, NO_LED,   1,   2,   3,   4,   5,   6},
-    {  NO_LED, 13,  12,  11,  10,   9,   8,   7},
+    {  NO_LED, NO_LED,   1,   2,   3,   4,   5,   6},
+    {  0, 13,  12,  11,  10,   9,   8,   7},
     {  NO_LED, 14,  15,  16,  17,  18,  19,  20},
-    {  NO_LED, 27,  26,  25,  24,  23,  22,  21},
-    {  28, NO_LED,  29,  30,  31,  32,  33,  34},
+    {  28, 27,  26,  25,  24,  23,  22,  21},
+    {  NO_LED, NO_LED,  29,  30,  31,  32,  33,  34},
     
     {  NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED },
     {  NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED },
 
-    {  35, NO_LED,  36,  37,  38,  39,  40,  41},
-    {  NO_LED, 48,  47,  46,  45,  44,  43,  42},
+    {  NO_LED, NO_LED,  36,  37,  38,  39,  40,  41},
+    {  35, 48,  47,  46,  45,  44,  43,  42},
     {  NO_LED, 49,  50,  51,  52,  53,  54,  55},
-    {  NO_LED, 62,  61,  60,  59,  58,  57,  56},
-    {  63, NO_LED,  64,  65,  66,  67,  68,  69},
+    {  63, 62,  61,  60,  59,  58,  57,  56},
+    {  NO_LED, NO_LED,  64,  65,  66,  67,  68,  69},
     
     {  NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED },
     {  NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED, NO_LED }
