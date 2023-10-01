@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include "config_common.h"
-
 /* Matrix Configuration - Rows are doubled up */
 #define MATRIX_ROWS 14
 // Last pins reserved for encoder / touch encoder support
@@ -53,7 +51,7 @@
 
 /* RGB Matrix Configuration */
 #define WS2812_PIO_USE_PIO1
-#define RGB_DI_PIN GP15
+#define WS2812_DI_PIN GP15
 
 // NOTE: WS2812 uses the RGBLED_NUM define, RGB Matrix uses DRIVER_LED_TOTAL...
 // so make sure both are set and the same
