@@ -31,6 +31,7 @@
 #define TOUCH_TERM 350 // time of a "button" touch, longer inputs will be a swipe
 #define TOUCH_RESOLUTION 25 // sensitivity of swipes, lower=faster
 #define TOUCH_SEGMENTS 3
+#define TAP_CODE_DELAY 1 // without a slight delay, the RP2040 doesn't register instant taps
 
 /* Encoder Configuration */
 //      Matrix Entries  k36/k35(E1SW>B13), k33/k32, k7/k28

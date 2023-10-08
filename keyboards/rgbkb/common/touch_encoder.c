@@ -302,7 +302,7 @@ void touch_encoder_toggle(void) {
 }
 
 bool touch_encoder_is_on(void) {
-    return !touch_disabled;
+    return touch_initialized && !touch_disabled;
 }
 
 void touch_encoder_slave_sync(uint8_t initiator2target_buffer_size, const void* initiator2target_buffer, uint8_t target2initiator_buffer_size, void* target2initiator_buffer) {
